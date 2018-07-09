@@ -8,7 +8,6 @@ let state = game.start()
 console.log(state.board)
 
 let monteCarlo = new MonteCarlo(game)
-// monteCarlo.update(state)
 
 let winner = game.winner(state)
 while (winner === null) {

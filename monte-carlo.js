@@ -13,7 +13,6 @@ class MonteCarlo {
   constructor(game, UCB1ExploreParam = 2) {
     this.game = game
     this.UCB1ExploreParam = UCB1ExploreParam
-    // this.state = null // current state node
     this.nodes = new Map() // map: hash(State) => MonteCarloNode
   }
 
@@ -22,11 +21,9 @@ class MonteCarlo {
    * @param {State} state - The state to make a node for; its parent is set to null.
    */
   makeNode(state) {
-    // this.state = state
     if (!this.nodes.has(state.hash())) {
       let unexpandedPlays = this.game.legalPlays(state).slice()
       let node = new MonteCarloNode(null, null, state, unexpandedPlays)
-      // console.log(node.children) // DEBUG
       this.nodes.set(state.hash(), node)
     }
   }
@@ -45,23 +42,17 @@ class MonteCarlo {
     let start = Date.now()
     let end = start + timeout * 1000
 
-    // console.log("a") // DEBUG
     while (Date.now() < end) {
 
-      // console.log("sel") // DEBUG
       let node = this.select(state)
-      // console.log("exp") // DEBUG
       if (!node.isLeaf()) {
         node = this.expand(node)
       }
-      // console.log("sim") // DEBUG
       let winner = this.simulate(node)
-      // console.log("bpg") // DEBUG
-      this.backpropagate(node, winner) // ??
+      this.backpropagate(node, winner)
 
       if (winner === 0) draws++
       totalSims++
-      // console.log("") // DEBUG
     }
 
     console.log('time(s) ' + timeout + '/' + timeout + ' (FINISHED)')
@@ -108,7 +99,6 @@ class MonteCarlo {
           max = ratio
         }
       }
-      // console.log(max)
     }
 
     return bestPlay
@@ -121,15 +111,11 @@ class MonteCarlo {
   select(state) {
     let node = this.nodes.get(state.hash())
     while(node.isFullyExpanded() && !node.isLeaf()) {
-      // console.log("x") // DEBUG
       let plays = node.allPlays()
-      // console.log(plays) // DEBUG
       let bestPlay
       let bestUCB1 = 0
       for (let play of plays) {
-        // console.log(node.childNode(play)) // DEBUG
         let childUCB1 = node.childNode(play).getUCB1(this.UCB1ExploreParam)
-        // console.log("---") // DEBUG
         if (childUCB1 > bestUCB1) {
           bestPlay = play
           bestUCB1 = childUCB1
