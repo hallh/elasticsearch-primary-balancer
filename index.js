@@ -13,7 +13,7 @@ let monteCarlo = new MonteCarlo(game)
 let winner = game.winner(state)
 while (winner === null) {
 
-  monteCarlo.runSims(state, 0.1)
+  monteCarlo.runSims(state, 1)
   let play = monteCarlo.getPlay(state, "best") // Timeout = 5 seconds
 
   state = game.nextState(state, play)
