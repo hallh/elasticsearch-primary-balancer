@@ -1,5 +1,7 @@
 'use strict'
 
+const State = require('./state.js')
+const Play = require('./play.js')
 const N_ROWS = 6
 const N_COLS = 7
 
@@ -24,10 +26,7 @@ class Game {
   /** Generate and return the initial game state. */
   start() {
     let newBoard = boardPrototype.map((row) => row.slice())
-    return { 
-      player: 1, 
-      board: newBoard
-    }
+    return new State(newBoard, 1)
   }
 
   /** Return the current player's legal plays from given state. */
@@ -36,7 +35,7 @@ class Game {
     for (let col = 0; col < N_COLS; col++) {
       for (let row = N_ROWS - 1; row >= 0; row--) {
         if (state.board[row][col] == 0) {
-          legals.push([row, col])
+          legals.push(new Play(row, col))
           break
         }
       }
@@ -46,15 +45,13 @@ class Game {
 
   /** Advance the given state and return it. */
   nextState(state, play) {
+    // let newHistory = state.playHistory.slice() // 1-deep copy
+    // newHistory.push(play)
+    let newBoard = state.board.map((row) => row.slice())
+    newBoard[play.row][play.col] = state.player
     let newPlayer = -state.player
 
-    let newBoard = state.board.map((row) => row.slice())
-    newBoard[play[0]][play[1]] = state.player
-
-    return {
-      player: newPlayer,
-      board: newBoard
-    }
+    return new State(newBoard, newPlayer)
   }
 
   /** Return the winner of the game. */
@@ -63,7 +60,7 @@ class Game {
     // if board is full, there's no winner
     if (!isNaN(state.board[0].reduce(
       (acc, cur) => cur == 0 ? NaN : acc + cur))
-    ) return null
+    ) return 0
 
     // one board for each possible winning run orientation
     let checkBoards = new Map()
@@ -100,7 +97,7 @@ class Game {
         }
       }
     }
-    return 0
+    return null
   }
 
 }

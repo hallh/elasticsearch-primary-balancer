@@ -3,10 +3,13 @@
 const N_GAMES = 1000
 
 const Game = require('./game.js')
+const State = require('./state.js')
+const Play = require('./play.js')
+
 let game = new Game()
 
 let state = game.start()
-let winner = 0
+let winner = null
 
 let ngames = 0
 let playerOneWins = 0
@@ -20,7 +23,7 @@ while (ngames < N_GAMES) {
   winner = game.winner(state)
 
   // If there's a winner, reset
-  if (winner != 0) {
+  if (winner != null) {
 
     // display one board
     if (!haveDisplayed) {
@@ -36,7 +39,7 @@ while (ngames < N_GAMES) {
     ngames += 1
     playerOneWins += (winner == 1)
     state = game.start()
-    winner = 0
+    winner = null
   }
 }
 
