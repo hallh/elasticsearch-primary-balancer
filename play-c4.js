@@ -1,7 +1,7 @@
 'use strict'
 
 /** Class representing a state transition. */
-class Play_ConnectFour {
+class Play_C4 {
   constructor(row, col) {
     this.row = row
     this.col = col
@@ -12,4 +12,4 @@ class Play_ConnectFour {
   }
 }
 
-module.exports = Play_ConnectFour
+module.exports = Play_C4

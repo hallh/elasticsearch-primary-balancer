@@ -1,12 +1,12 @@
 'use strict'
 
 const util = require('util')
-const Game_ConnectFour = require('./game-connect-four.js')
+const Game_C4 = require('./game-c4.js')
 const MonteCarlo = require('./monte-carlo.js')
 
 // Setup
 
-let game = new Game_ConnectFour()
+let game = new Game_C4()
 let mc = new MonteCarlo(game)
 
 let state = game.start()

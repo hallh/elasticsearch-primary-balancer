@@ -1,7 +1,7 @@
 'use strict'
 
 /** Class representing a game state. */
-class State_ConnectFour {
+class State_C4 {
 
   constructor(playHistory, board, player) {
     this.playHistory = playHistory
@@ -20,4 +20,4 @@ class State_ConnectFour {
   // Note: If hash uses board, multiple parents possible
 }
 
-module.exports = State_ConnectFour
+module.exports = State_C4
