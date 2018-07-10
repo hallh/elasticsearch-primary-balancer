@@ -1,5 +1,6 @@
 'use strict'
 
+const util = require('util')
 const State = require('./state.js')
 const Game = require('./game.js')
 const MonteCarlo = require('./monte-carlo.js')
@@ -11,16 +12,18 @@ let mc = new MonteCarlo(game)
 
 // Run MCTS for specific state for inspection
 
-let state = new State([ [ 0, 0, 2, 1, 2, 0, 0 ],
-                        [ 2, 0, 2, 2, 1, 0, 0 ],
-                        [ 2, 0, 2, 1, 1, 0, 0 ],
-                        [ 1, 0, 1, 1, 2, 1, 0 ],
-                        [ 2, 0, 2, 2, 1, 1, 1 ],
-                        [ 1, 2, 2, 1, 1, 2, 1 ] ],
-                      -1)
+let state = new State([ [  0,  0,  0, -1,  0,  0,  0 ],
+                        [ -1,  0,  1,  1,  0,  0,  0 ],
+                        [  1,  0, -1, -1,  0,  1,  0 ],
+                        [ -1,  0, -1, -1,  0, -1,  0 ],
+                        [  1,  0,  1,  1,  0, -1,  0 ],
+                        [  1,  1, -1,  1, -1,  1,  0 ] ],
+                      1)
 
-mc.runSearch(state, 0.5)
-console.log(mc.bestPlay(state))
+mc.runSearch(state, 1)
+let stats = mc.getStats(state)
+console.log(util.inspect(stats, {showHidden: false, depth: null}))
+console.log(mc.bestPlay(state, "robust"))
 
 // // From initial state, play games until end
 
