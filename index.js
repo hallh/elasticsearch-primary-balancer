@@ -7,7 +7,7 @@ const MonteCarlo = require('./monte-carlo.js')
 // Setup
 
 let game = new Game_C4()
-let mc = new MonteCarlo(game)
+let mcts = new MonteCarlo(game)
 
 let state = game.start()
 let winner = game.winner(state)
@@ -20,12 +20,12 @@ while (winner === null) {
   console.log("player: " + (state.player === 1 ? 1 : 2))
   console.log(state.board.map((row) => row.map((cell) => cell === -1 ? 2 : cell)))
 
-  mc.runSearch(state, 1)
+  mcts.runSearch(state, 1)
 
-  let stats = mc.getStats(state)
+  let stats = mcts.getStats(state)
   console.log(util.inspect(stats, {showHidden: false, depth: null}))
 
-  let play = mc.bestPlay(state, "robust")
+  let play = mcts.bestPlay(state, "robust")
   console.log(play)
 
   state = game.nextState(state, play)

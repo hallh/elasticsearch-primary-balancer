@@ -31,16 +31,16 @@ class Game_C4 {
 
   /** Return the current player's legal plays from given state. */
   legalPlays(state) {
-    let legals = []
+    let legalPlays = []
     for (let col = 0; col < N_COLS; col++) {
       for (let row = N_ROWS - 1; row >= 0; row--) {
         if (state.board[row][col] == 0) {
-          legals.push(new Play(row, col))
+          legalPlays.push(new Play(row, col))
           break
         }
       }
     }
-    return legals
+    return legalPlays
   }
 
   /** Advance the given state and return it. */
