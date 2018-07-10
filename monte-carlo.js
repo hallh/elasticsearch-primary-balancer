@@ -46,10 +46,12 @@ class MonteCarlo {
     while (Date.now() < end) {
 
       let node = this.select(state)
-      if (node.isLeaf() === false && this.game.winner(node.state) === null) {
+      let winner = this.game.winner(node.state)
+
+      if (node.isLeaf() === false && winner === null) {
         node = this.expand(node)
+        winner = this.simulate(node)
       }
-      let winner = this.simulate(node)
       this.backpropagate(node, winner)
 
       if (winner === 0) draws++
@@ -71,7 +73,7 @@ class MonteCarlo {
 
     // If not all children are expanded, not enough information
     if (this.nodes.get(state.hash()).isFullyExpanded() === false)
-      return null
+      throw new Error("Not enough information!")
 
     let node = this.nodes.get(state.hash())
     let allPlays = node.allPlays()
