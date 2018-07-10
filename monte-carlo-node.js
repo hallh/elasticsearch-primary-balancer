@@ -20,7 +20,7 @@ class MonteCarloNode {
 
     // Tree stuff
     this.parent = parent // Parent MonteCarloNode
-    this.children = new Map() // Map: hash(play) => { expanded?, child MonteCarloNode }
+    this.children = new Map() // Map: hash(play) => { Play, child MonteCarloNode }
     for (let play of unexpandedPlays) {
       this.children.set(play.hash(), { play: play, node: null })
     }
