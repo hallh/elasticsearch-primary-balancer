@@ -17,16 +17,14 @@ let mc = new MonteCarlo(game)
 
 let state = game.start()
 // let state = new State([],
-//                       [ [  0,  0,  0,  0,  9,  1,  1 ],
-//                         [  0,  0,  0,  0,  9, -1, -1 ],
-//                         [  0,  0,  0,  0,  9,  1,  1 ],
-//                         [  9,  9,  9,  9,  9, -1, -1 ],
-//                         [  1,  1,  1, -1,  1,  1,  1 ],
-//                         [ -1, -1, -1,  1, -1, -1, -1 ],
-//                         [  1,  1,  1, -1,  1,  1,  1 ] ], 
-//                       1)
+//                       [ [ 0, 0, 0, 0, 0, 0, 0 ],
+//                         [ 0, 0, 0, 0, 0, 0, 0 ],
+//                         [ 0, 0, 0, 0, 0, 0, 0 ],
+//                         [ 0, 0, 0,-1, 0, 0, 0 ],
+//                         [ 0, 0, 0, 1, 1, 0, 0 ],
+//                         [ 0, 0, 0, 1,-1, 0, 0 ] ], 
+//                       -1)
 
-console.log(state.board)
 let winner = game.winner(state)
 
 // mc.runSearch(state, 10)
@@ -48,8 +46,8 @@ while (winner === null) {
 }
 
 console.log()
+console.log("winner: " + (winner === 1 ? 1 : 2))
 console.log(state.board.map((row) => row.map((cell) => cell === -1 ? 2 : cell)))
-console.log("winner: " + winner)
 
 
 // console.log('time(s) ' + timeout + '/' + timeout + ' (FINISHED)')
