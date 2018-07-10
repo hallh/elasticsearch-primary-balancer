@@ -46,7 +46,7 @@ class MonteCarlo {
     while (Date.now() < end) {
 
       let node = this.select(state)
-      if (!node.isLeaf()) {
+      if (node.isLeaf() === false && this.game.winner(node.state) === null) {
         node = this.expand(node)
       }
       let winner = this.simulate(node)
@@ -79,7 +79,7 @@ class MonteCarlo {
 
     // Most visits (Chaslot's robust child)
     if (policy === "robust") {
-      let max = 0
+      let max = -Infinity
       for (let play of allPlays) {
         let childNode = node.childNode(play)
         if (childNode.n_plays > max) {
@@ -90,7 +90,7 @@ class MonteCarlo {
     }
     // Highest winrate (Best child)
     else if (policy === "best") {
-      let max = 0
+      let max = -Infinity
       for (let play of allPlays) {
         let childNode = node.childNode(play)
         let ratio = childNode.n_wins / childNode.n_plays
@@ -115,7 +115,7 @@ class MonteCarlo {
     while(node.isFullyExpanded() && !node.isLeaf()) {
       let plays = node.allPlays()
       let bestPlay
-      let bestUCB1 = 0
+      let bestUCB1 = -Infinity
       for (let play of plays) {
         let childUCB1 = node.childNode(play).getUCB1(this.UCB1ExploreParam)
         if (childUCB1 > bestUCB1) {
@@ -138,7 +138,6 @@ class MonteCarlo {
     let plays = node.unexpandedPlays()
     let index = Math.floor(Math.random() * plays.length)
     let play = plays[index]
-
     let childState = this.game.nextState(node.state, play)
     let childUnexpandedPlays = this.game.legalPlays(childState)
     // let node = new MonteCarloNode(node, play, childState, childUnexpandedPlays)
@@ -157,12 +156,18 @@ class MonteCarlo {
   simulate(node) {
     let state = node.state
     let winner = this.game.winner(state)
+
+    // console.log(state)
+    // console.log(winner)
     while (winner === null) {
       let plays = this.game.legalPlays(state)
       let play = plays[Math.floor(Math.random() * plays.length)]
       state = this.game.nextState(state, play)
       winner = this.game.winner(state)
     }
+    // console.log(state)
+    // console.log(winner)
+    // console.log()
     return winner
   }
 

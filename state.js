@@ -4,7 +4,6 @@
 class State {
 
   constructor(board, player) {
-    // this.playHistory = playHistory
     this.board = board
     this.player = player
   }
