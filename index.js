@@ -12,42 +12,44 @@ let mc = new MonteCarlo(game)
 
 
 
-// // Run MCTS for specific state for inspection
-
-// let state = new State([ [  1,  1, -1, -1,  1,  0,  1 ],
-//                         [ -1,  1,  1,  1, -1,  0, -1 ],
-//                         [  1,  1, -1,  1,  1,  0, -1 ],
-//                         [ -1, -1, -1,  1, -1,  0, -1 ],
-//                         [  1, -1,  1, -1,  1,  0,  1 ],
-//                         [ -1, -1,  1,  1, -1,  1, -1 ] ],
-//                       -1)
-
-// mc.runSearch(state, 1)
-// let stats = mc.getStats(state)
-// console.log(util.inspect(stats, {showHidden: false, depth: null}))
-// console.log(mc.bestPlay(state, "robust"))
-
-
 
 // From initial state, play games until end
 
 let state = game.start()
-console.log(state.board)
+// let state = new State([],
+//                       [ [  0,  0,  0,  0,  9,  1,  1 ],
+//                         [  0,  0,  0,  0,  9, -1, -1 ],
+//                         [  0,  0,  0,  0,  9,  1,  1 ],
+//                         [  9,  9,  9,  9,  9, -1, -1 ],
+//                         [  1,  1,  1, -1,  1,  1,  1 ],
+//                         [ -1, -1, -1,  1, -1, -1, -1 ],
+//                         [  1,  1,  1, -1,  1,  1,  1 ] ], 
+//                       1)
 
+console.log(state.board)
 let winner = game.winner(state)
+
+// mc.runSearch(state, 10)
+
 while (winner === null) {
 
+  console.log()
+  console.log("player: " + (state.player === 1 ? 1 : 2))
+  console.log(state.board.map((row) => row.map((cell) => cell === -1 ? 2 : cell)))
+
   mc.runSearch(state, 1)
-  let play = mc.bestPlay(state, "best") // Timeout = 5 seconds
+  let stats = mc.getStats(state)
+  console.log(util.inspect(stats, {showHidden: false, depth: null}))
 
+  let play = mc.bestPlay(state, "robust")
   state = game.nextState(state, play)
-  let printBoard = state.board.map((row) => row.map((cell) => cell == -1 ? 2 : cell))
-  // console.log(state.board)
-
   winner = game.winner(state)
+  console.log(play)
 }
-console.log("winner: " + winner)
 
+console.log()
+console.log(state.board.map((row) => row.map((cell) => cell === -1 ? 2 : cell)))
+console.log("winner: " + winner)
 
 
 // console.log('time(s) ' + timeout + '/' + timeout + ' (FINISHED)')
