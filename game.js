@@ -26,7 +26,7 @@ class Game {
   /** Generate and return the initial game state. */
   start() {
     let newBoard = boardPrototype.map((row) => row.slice())
-    return new State(newBoard, 1)
+    return new State([], newBoard, 1)
   }
 
   /** Return the current player's legal plays from given state. */
@@ -45,13 +45,13 @@ class Game {
 
   /** Advance the given state and return it. */
   nextState(state, play) {
-    // let newHistory = state.playHistory.slice() // 1-deep copy
-    // newHistory.push(play)
+    let newHistory = state.playHistory.slice() // 1-deep copy
+    newHistory.push(play)
     let newBoard = state.board.map((row) => row.slice())
     newBoard[play.row][play.col] = state.player
     let newPlayer = -state.player
 
-    return new State(newBoard, newPlayer)
+    return new State(newHistory, newBoard, newPlayer)
   }
 
   /** Return the winner of the game. */
