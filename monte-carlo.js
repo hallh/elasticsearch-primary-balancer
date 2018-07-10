@@ -182,6 +182,23 @@ class MonteCarlo {
       node = node.parent
     }
   }
+
+  // Utility / debugging methods
+
+  /**
+   * Return MCTS statistics for this node and children nodes
+   * @param {State} state - The state to get statistics for.
+   * @return {Object} The MCTS statistics.
+   */
+  getStats(state) {
+    let node = this.nodes.get(state.hash())
+    let stats = { n_plays: node.n_plays, n_wins: node.n_wins, children: [] }
+    for (let child of node.children.values()) {
+      if (child.node === null) stats.children.push({ play: child.play, n_plays: null, n_wins: null})
+      else stats.children.push({ play: child.play, n_plays: child.node.n_plays, n_wins: child.node.n_wins})
+    }
+    return stats
+  }
 }
 
 module.exports = MonteCarlo
