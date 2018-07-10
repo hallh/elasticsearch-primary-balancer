@@ -8,7 +8,7 @@ class MonteCarlo {
   /**
    * Create a Monte Carlo search tree.
    * @param {Game} game - The game to query regarding legal moves and state advancement.
-   * @param {number} UCB1ExploreParam - The square of the bias parameter in the UCB1 algorithm, defaults to 2.
+   * @param {number} UCB1ExploreParam - The square of the bias parameter in the UCB1 algorithm; defaults to 2.
    */
   constructor(game, UCB1ExploreParam = 2) {
     this.game = game
@@ -17,8 +17,8 @@ class MonteCarlo {
   }
 
   /**
-   * If state does not exist, create dangling node
-   * @param {State} state - The state to make a node for; its parent is set to null.
+   * If state does not exist, create dangling node.
+   * @param {State} state - The state to make a dangling node for; its parent is set to null.
    */
   makeNode(state) {
     if (!this.nodes.has(state.hash())) {
@@ -30,17 +30,18 @@ class MonteCarlo {
 
   /**
    * From given state, run as many simulations as possible until the time limit, building statistics.
+   * @param {State} state - The state to run the search from.
    * @param {number} timeout - The time to run the simulations for, in seconds.
+   * @return {Object} Search statistics.
    */
-  runSims(state, timeout) {
+  runSearch(state, timeout = 3) {
 
     this.makeNode(state)
 
     let draws = 0
     let totalSims = 0
     
-    let start = Date.now()
-    let end = start + timeout * 1000
+    let end = Date.now() + timeout * 1000
 
     while (Date.now() < end) {
 
@@ -55,17 +56,16 @@ class MonteCarlo {
       totalSims++
     }
 
-    console.log('time(s) ' + timeout + '/' + timeout + ' (FINISHED)')
-    console.log('total sims : ' + totalSims)
-    console.log('total rate(sims/s) : ' + (totalSims/timeout).toFixed(1))
-    console.log('draws : ' + draws) // no winner
+    return { runtime: timeout, simulations: totalSims, draws: draws }
   }
 
   /**
    * From the available statistics, calculate the best move from the given state.
-   * @return {Play} The best play from the current state.
+   * @param {State} state - The state to get the best play from.
+   * @param {string} policy - The selection policy for the "best" play.
+   * @return {Play} The best play, according to the given policy.
    */
-  getPlay(state, policy = "robust") {
+  bestPlay(state, policy = "robust") {
 
     this.makeNode(state)
 
@@ -107,6 +107,8 @@ class MonteCarlo {
   /**
    * Phase 1: Selection
    * Select until EITHER not fully expanded OR leaf node
+   * @param {State} state - The root state to start selection from.
+   * @return {MonteCarloNode} The selected node.
    */
   select(state) {
     let node = this.nodes.get(state.hash())
@@ -129,7 +131,8 @@ class MonteCarlo {
   /**
    * Phase 2: Expansion
    * Of the given node, expand a random unexpanded child node
-   * Assume given node is not a leaf
+   * @param {MonteCarloNode} node - The node to expand from. Assume not leaf.
+   * @return {MonteCarloNode} The new expanded child node.
    */
   expand(node) {
     let plays = node.unexpandedPlays()
@@ -148,6 +151,8 @@ class MonteCarlo {
   /**
    * Phase 3: Simulation
    * From given node, play the game until a terminal state, then return winner
+   * @param {MonteCarloNode} node - The node to simulate from.
+   * @return {number} The winner of the terminal game state.
    */
   simulate(node) {
     let state = node.state
@@ -163,7 +168,9 @@ class MonteCarlo {
 
   /**
    * Phase 4: Backpropagation
-   * From given node, propagate winner to ancestors' statistics
+   * From given node, propagate plays and winner to ancestors' statistics
+   * @param {MonteCarloNode} node - The node to backpropagate from. Typically leaf.
+   * @param {number} winner - The winner to propagate.
    */
   backpropagate(node, winner) {
     while (node !== null) {
@@ -175,9 +182,6 @@ class MonteCarlo {
       node = node.parent
     }
   }
-
-
-
 }
 
 module.exports = MonteCarlo
