@@ -2,7 +2,11 @@
 
 const MonteCarloNode = require('./monte-carlo-node.js')
 
-/** Class representing the Monte Carlo search tree. */
+/**
+ * Class representing the Monte Carlo search tree.
+ * Handles the four MCTS steps: selection, expansion, simulation, backpropagation.
+ * Handles best-move selection.
+ */
 class MonteCarlo {
 
   /**
@@ -90,7 +94,8 @@ class MonteCarlo {
         }
       }
     }
-    // Highest winrate (Best child)
+
+    // Highest winrate (best child)
     else if (policy === "best") {
       let max = -Infinity
       for (let play of allPlays) {
@@ -137,12 +142,13 @@ class MonteCarlo {
    * @return {MonteCarloNode} The new expanded child node.
    */
   expand(node) {
+
     let plays = node.unexpandedPlays()
     let index = Math.floor(Math.random() * plays.length)
     let play = plays[index]
+
     let childState = this.game.nextState(node.state, play)
     let childUnexpandedPlays = this.game.legalPlays(childState)
-    // let node = new MonteCarloNode(node, play, childState, childUnexpandedPlays)
     let childNode = node.expand(play, childState, childUnexpandedPlays)
     this.nodes.set(childState.hash(), childNode)
 
@@ -156,20 +162,17 @@ class MonteCarlo {
    * @return {number} The winner of the terminal game state.
    */
   simulate(node) {
+
     let state = node.state
     let winner = this.game.winner(state)
 
-    // console.log(state)
-    // console.log(winner)
     while (winner === null) {
       let plays = this.game.legalPlays(state)
       let play = plays[Math.floor(Math.random() * plays.length)]
       state = this.game.nextState(state, play)
       winner = this.game.winner(state)
     }
-    // console.log(state)
-    // console.log(winner)
-    // console.log()
+
     return winner
   }
 
@@ -180,17 +183,18 @@ class MonteCarlo {
    * @param {number} winner - The winner to propagate.
    */
   backpropagate(node, winner) {
+
     while (node !== null) {
       node.n_plays += 1
-      // Flip for parent's choice
-      if (node.state.player === -winner) {
+      // Parent's choice
+      if (node.state.isPlayer(-winner)) {
         node.n_wins += 1
       }
       node = node.parent
     }
   }
 
-  // Utility / debugging methods
+  // Utility & debugging methods
 
   /**
    * Return MCTS statistics for this node and children nodes

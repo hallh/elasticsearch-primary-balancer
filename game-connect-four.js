@@ -1,7 +1,7 @@
 'use strict'
 
-const State = require('./state.js')
-const Play = require('./play.js')
+const State = require('./state-connect-four.js')
+const Play = require('./play-connect-four.js')
 const N_ROWS = 6
 const N_COLS = 7
 
@@ -21,7 +21,7 @@ const checkPrototype = [ [0,0,0,0,0,0,0,0,0],
                          [0,0,0,0,0,0,0,0,0] ]
 
 /** Class representing the game. */
-class Game {
+class Game_ConnectFour {
 
   /** Generate and return the initial game state. */
   start() {
@@ -102,4 +102,4 @@ class Game {
 
 }
 
-module.exports = Game
+module.exports = Game_ConnectFour
