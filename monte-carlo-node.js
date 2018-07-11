@@ -111,8 +111,6 @@ class MonteCarloNode {
    * @return {number} The UCB1 value of this node.
    */
   getUCB1(biasParam) {
-    // console.log(this.n_wins / this.n_plays)
-    // console.log(Math.sqrt(biasParam * Math.log(this.parent.plays) / this.n_plays))
     return (this.n_wins / this.n_plays) + Math.sqrt(biasParam * Math.log(this.parent.n_plays) / this.n_plays);
   }
 
