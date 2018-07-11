@@ -3,8 +3,6 @@
 const N_GAMES = 1000
 
 const Game = require('./game-c4.js')
-const State = require('./state-c4.js')
-const Play = require('./play-c4.js')
 
 let game = new Game()
 
