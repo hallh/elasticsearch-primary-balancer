@@ -83,7 +83,7 @@ class MonteCarlo {
     let allPlays = node.allPlays()
     let bestPlay
 
-    // Most visits (Chaslot's robust child)
+    // Most visits (robust child)
     if (policy === "robust") {
       let max = -Infinity
       for (let play of allPlays) {
@@ -95,8 +95,8 @@ class MonteCarlo {
       }
     }
 
-    // Highest winrate (best child)
-    else if (policy === "best") {
+    // Highest winrate (max child)
+    else if (policy === "max") {
       let max = -Infinity
       for (let play of allPlays) {
         let childNode = node.childNode(play)

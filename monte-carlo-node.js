@@ -46,7 +46,7 @@ class MonteCarloNode {
   }
 
   /**
-   * Expand the child play at the specified index and return it.
+   * Expand the specified child play and return the new child node.
    * Add the node to the array of children nodes.
    * Remove the play from the array of unexpanded plays.
    * @param {Play} play - The play to expand.

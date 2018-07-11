@@ -26,7 +26,7 @@ while (winner === null) {
   console.log(util.inspect(stats, {showHidden: false, depth: null}))
 
   let play = mcts.bestPlay(state, "robust")
-  console.log(play)
+  console.log("chosen play: " + util.inspect(play, {showHidden: false, depth: null}))
 
   state = game.nextState(state, play)
   winner = game.winner(state)
