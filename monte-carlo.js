@@ -17,7 +17,7 @@ class MonteCarlo {
   constructor(game, UCB1ExploreParam = 2) {
     this.game = game
     this.UCB1ExploreParam = UCB1ExploreParam
-    this.nodes = new Map() // map: hash(State) => MonteCarloNode
+    this.nodes = new Map() // map: State.hash() => MonteCarloNode
   }
 
   /**
