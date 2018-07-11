@@ -45,7 +45,7 @@ class MonteCarlo {
     // return play
   }
 
-  /** Phase 1, Selection: Select until not fully expanded OR leaf OR winning */
+  /** Phase 1, Selection: Select until not fully expanded OR leaf */
   select(state) {
     // TODO
     // return node
@@ -57,7 +57,7 @@ class MonteCarlo {
     // return childNode
   }
 
-  /** Phase 3, Simulation: Play the game until a terminal state, then return winner */
+  /** Phase 3, Simulation: Play game to terminal state, return winner */
   simulate(node) {
     // TODO
     // return winner
