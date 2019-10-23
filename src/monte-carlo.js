@@ -27,6 +27,7 @@ class MonteCarlo {
   makeNode(state) {
     if (!this.nodes.has(state.hash())) {
       let unexpandedPlays = this.game.legalPlays(state).slice()
+      // console.log("creating node:", state.hash(), " - ", unexpandedPlays.length, " unexpanded plays");
       let node = new MonteCarloNode(null, null, state, unexpandedPlays)
       this.nodes.set(state.hash(), node)
     }
@@ -44,11 +45,10 @@ class MonteCarlo {
 
     let draws = 0
     let totalSims = 0
-    
+
     let end = Date.now() + timeout * 1000
 
     while (Date.now() < end) {
-
       let node = this.select(state)
       let winner = this.game.winner(node.state)
 
@@ -56,6 +56,7 @@ class MonteCarlo {
         node = this.expand(node)
         winner = this.simulate(node)
       }
+
       this.backpropagate(node, winner)
 
       if (winner === 0) draws++
@@ -119,6 +120,7 @@ class MonteCarlo {
    */
   select(state) {
     let node = this.nodes.get(state.hash())
+
     while(node.isFullyExpanded() && !node.isLeaf()) {
       let plays = node.allPlays()
       let bestPlay
@@ -132,6 +134,7 @@ class MonteCarlo {
       }
       node = node.childNode(bestPlay)
     }
+
     return node
   }
 
@@ -147,8 +150,12 @@ class MonteCarlo {
     let index = Math.floor(Math.random() * plays.length)
     let play = plays[index]
 
+    // console.log("Expanding", node.state.hash(), ` - Play #${index} of ${plays.length} unexpanded plays`);
+
     let childState = this.game.nextState(node.state, play)
+
     let childUnexpandedPlays = this.game.legalPlays(childState)
+    const id = Math.floor(Math.random() * 1000);
     let childNode = node.expand(play, childState, childUnexpandedPlays)
     this.nodes.set(childState.hash(), childNode)
 
@@ -187,7 +194,7 @@ class MonteCarlo {
     while (node !== null) {
       node.n_plays += 1
       // Parent's choice
-      if (node.state.isPlayer(-winner)) {
+      if (node.state.isPlayer(winner)) {
         node.n_wins += 1
       }
       node = node.parent
