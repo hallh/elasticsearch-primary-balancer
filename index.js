@@ -1,12 +1,12 @@
 'use strict'
 
 const util = require('util')
-const Game_C4 = require('./game-c4.js')
+const Game_ES = require('./game-es.js')
 const MonteCarlo = require('./monte-carlo.js')
 
 // Setup
 
-let game = new Game_C4()
+let game = new Game_ES()
 let mcts = new MonteCarlo(game)
 
 let state = game.start()
@@ -18,20 +18,24 @@ while (winner === null) {
 
   console.log()
   console.log("player: " + (state.player === 1 ? 1 : 2))
-  console.log(state.board.map((row) => row.map((cell) => cell === -1 ? 2 : cell)))
+  let play;
 
-  mcts.runSearch(state, 1)
+  // Only run play for player, choose random for adversary
+  if (state.player === 1) {
+    mcts.runSearch(state, 30)
 
-  let stats = mcts.getStats(state)
-  console.log(util.inspect(stats, {showHidden: false, depth: null}))
+    let stats = mcts.getStats(state)
+    console.log(" > stats:", stats.n_plays, stats.n_wins)
 
-  let play = mcts.bestPlay(state, "robust")
-  console.log("chosen play: " + util.inspect(play, {showHidden: false, depth: null}))
+    play = mcts.bestPlay(state, "robust")
+  } else {
+    play = game.legalPlays(state)[0];
+  }
 
+  console.log(" > chosen play:", (play ? play.pretty() : null))
   state = game.nextState(state, play)
   winner = game.winner(state)
 }
 
 console.log()
 console.log("winner: " + (winner === 1 ? 1 : 2))
-console.log(state.board.map((row) => row.map((cell) => cell === -1 ? 2 : cell)))

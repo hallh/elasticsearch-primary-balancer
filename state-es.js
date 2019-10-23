@@ -1,11 +1,11 @@
 'use strict'
 
 /** Class representing a game state. */
-class State_C4 {
+class State_ES {
 
-  constructor(playHistory, board, player) {
+  constructor(playHistory, shards, player) {
     this.playHistory = playHistory
-    this.board = board
+    this.shards = shards
     this.player = player
   }
 
@@ -14,10 +14,10 @@ class State_C4 {
   }
 
   hash() {
-    return JSON.stringify(this.playHistory)
+    return "p," + this.playHistory.map(play => play.pretty()).join(',')
   }
 
   // Note: If hash uses board, multiple parents possible
 }
 
-module.exports = State_C4
+module.exports = State_ES
