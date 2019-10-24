@@ -32,7 +32,8 @@ while (winner === null) {
     play = game.legalPlays(state)[0];
   }
 
-  console.log(" > chosen play:", (play ? play.pretty() : null))
+  console.log(" > chosen play:", (play ? play.commands() : null))
+
   state = game.nextState(state, play)
   winner = game.winner(state)
 }
