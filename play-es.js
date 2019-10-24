@@ -20,7 +20,7 @@ class Play_ES {
   }
 
   commands() {
-    return JSON.stringify({
+    return {
       "commands": [].concat.apply([], this.moves.map((m) => [
         {
           "move": {
@@ -39,7 +39,7 @@ class Play_ES {
           }
         }
       ]))
-    });
+    };
   }
 }
 

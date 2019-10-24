@@ -19,19 +19,11 @@ const AZ_MAPPING = {
   "8": "1c"
 };
 
-let has_started = false;
-
-
 /** Class representing the game. */
 class Game_ES {
 
   /** Generate and return the initial game state. */
   start() {
-    if (has_started) {
-      throw new Error("Can't start multiple times");
-    }
-
-    has_started = true;
     let body = request('GET', 'http://localhost:9200/_cat/shards?h=index,shard,prirep,state,store,node').body.toString();
 
     let rows = body.split('\n').map(l => {
