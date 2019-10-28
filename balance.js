@@ -2,8 +2,8 @@
 
 const request = require('request')
 const util = require('util')
-const Game_ES = require('./game-es.js')
-const MonteCarlo = require('./monte-carlo.js')
+const Game_ES = require('./src/game-es.js')
+const MonteCarlo = require('./src/monte-carlo.js')
 
 // Setup
 
