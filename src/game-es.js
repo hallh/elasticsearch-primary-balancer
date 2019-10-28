@@ -2,7 +2,6 @@
 
 const State = require('./state-es.js');
 const Play = require('./play-es.js');
-const request = require('sync-request');
 
 const TARGET_INDEX  = /^(achoo_appv4|rollup_2019.10)$/;
 const PCT_THRESHOLD = 0.18; // Balance hosts with > 15% primaries

@@ -1,11 +1,14 @@
 'use strict'
 
-const request = require('request')
-const util = require('util')
+const parseArgs = require('./src/parseargs.js')
 const Game_ES = require('./src/game-es.js')
 const MonteCarlo = require('./src/monte-carlo.js')
 
 // Setup
+
+const args = new parseArgs(process.argv);
+
+console.log(args);
 
 function run() {
   let game = new Game_ES()
@@ -75,4 +78,4 @@ function checkIfReady() {
 }
 
 
-checkIfReady();
+// checkIfReady();

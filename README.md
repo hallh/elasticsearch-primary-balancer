@@ -26,7 +26,7 @@ The tool can be run as follows:
 $ node index.js \
     [--dry-run] \
     [--suggest] \
-    [--map H0:AZ1,HN:AZN] \
+    [--map H0#AZ1,HN#AZN] \
     [--simulation-time N] \
     [--index index1,...,indexN] \
     [--threshold N] \
@@ -38,7 +38,7 @@ $ node index.js \
 | --- | --- | --- |
 | --dry-run | No | Will simulate the shard movement and list out the probability of success as well as the number of moves necessary to complete the balancing. This will only read and print the current state of your cluster primaries, **no actions will be performed on your cluster.** |
 [ --suggest | No | Instead of performing actual swaps on the cluster, it'll suggest a move and print the equivalent `curl` command. If you're nervous about running this tool on your cluster, you can use this to make the moves yourself and then simply consult the tool again once the move is complete. *NOTE: Can not be used with `--dry-run`*. |
-| --map&nbsp;H0:AZ1,HN:AZN | No | Will use this mapping to only swap replicas with nodes in the same AZ. |
+| --map&nbsp;H0#AZ1,HN#AZN | No | Will use this mapping to only swap replicas with nodes in the same AZ. |
 | --simulation-time&nbsp;N | No | After each move, the MCST algorithm will spend `N` seconds to run simulations of random moves and the subsequent probability of success. **Default: 30**. |
 | --index&nbsp;INDECES | No | Comma-separated list of indexes to consider. Not all indexes on a cluster are necessarily upserted, so this will limit the balancing to only consider the primaries of the listed indexes. |
 | --auth&nbsp;AUTH | No | Base64 encoded HTTP Basic Auth string to use. Only necessary if you have basic auth set up. |
@@ -63,13 +63,13 @@ curl localhost:9200/_cluster/settings \
 **Doing a dry-run/simulation**
 
 ```sh
-$ node balance.js --dry-run --map es-data-0:1a,es-data-1:1b,es-data-2:1c,es-data-3:1a,es-data-4:1b --index myindex,yourindex localhost:9200
+$ node balance.js --dry-run --map es-data-0#1a,es-data-1#1b,es-data-2#1c,es-data-3#1a,es-data-4#1b --index myindex,yourindex localhost:9200
 ```
 
 **Doing a real run**
 
 ```sh
-$ node balance.js --map es-data-0:1a,es-data-1:1b,es-data-2:1c,es-data-3:1a,es-data-4:1b --index myindex,yourindex localhost:9200
+$ node balance.js --map es-data-0#1a,es-data-1#1b,es-data-2#1c,es-data-3#1a,es-data-4#1b --index myindex,yourindex localhost:9200
 ```
 
 ### Imperfect balance
