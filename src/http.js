@@ -100,6 +100,11 @@ class request {
       callback(error);
     });
 
+    // Write body if applicable
+    if (this.encoded) {
+      req.write(this.encoded);
+    }
+
     // Flush
     req.end();
   }

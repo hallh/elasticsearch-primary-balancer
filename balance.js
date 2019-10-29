@@ -61,16 +61,18 @@ function run(initial_state) {
     console.log(`[+] Simulation succeeded in ${moves} moves, with an estimated ${conf}% probability of success.`);
   }
 
-  // submitMove(play.commands(), (error, res) => {
-  //   if (error || res.acknowledged !== true) {
-  //     console.log(JSON.stringify(error || res, null, 2));
-  //     throw new Error('RELOCATION REQUEST FAILED');
-  //   }
-  //
-  //   console.log("SUCCESS, waiting to next check")
-  //
-  //   setTimeout(() => { process.nextTick(checkIfReady); }, 5000);
-  // });
+  submitMove(play.commands(), (error, body) => {
+    let res = JSON.parse(body);
+
+    if (error || res.acknowledged !== true) {
+      console.log(JSON.stringify(error || res, null, 2));
+      throw new Error('RELOCATION REQUEST FAILED');
+    }
+
+    console.log("SUCCESS, waiting to next check")
+
+    setTimeout(() => { process.nextTick(checkIfReady); }, 5000);
+  });
 }
 
 
@@ -79,19 +81,12 @@ function submitMove(cmds, cb) {
     url: 'http://localhost:9200/_cluster/reroute',
     method: 'POST',
     body: cmds,
-    json: true,
     headers: {
       'Content-Type': 'application/json'
     }
   };
 
-  // const req = new request(prep, (error, res, body) => {
-  //   if (error) {
-  //     return cb(error);
-  //   }
-  //
-  //   cb(null, body);
-  // });
+  const req = new request(prep, cb);
 }
 
 
