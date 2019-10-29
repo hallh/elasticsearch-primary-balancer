@@ -279,8 +279,7 @@ function getPossibleMovements(hosts, shards) {
     }));
   });
 
-  // Return 3 random moves
-  return shuffle(movements).slice(0, 3);
+  return movements;
 }
 
 
