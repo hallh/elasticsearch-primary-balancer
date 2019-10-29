@@ -21,11 +21,18 @@ const AZ_MAPPING = {
 /** Class representing the game. */
 class Game_ES {
 
+  /** Save the shard dist. */  
+  constructor(initial_state) {
+    if (!initial_state) {
+      throw new Error('Shard data is required on startup.');
+    }
+
+    this.initial_state = initial_state;
+  }
+
   /** Generate and return the initial game state. */
   start() {
-    let body = request('GET', 'http://localhost:9200/_cat/shards?h=index,shard,prirep,state,store,node').body.toString();
-
-    let rows = body.split('\n').map(l => {
+    let rows = this.initial_state.split('\n').map(l => {
       const split = l.split(/\s+/);
 
       if (split.length !== 6) {
