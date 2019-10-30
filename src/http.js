@@ -53,10 +53,6 @@ class request {
   submit(callback) {
     let client = http;
 
-    if (this.parsed.protocol === 'https:') {
-      client = https;
-    }
-
     // Prepare request
     const options = {
       hostname: this.parsed.hostname,
@@ -64,6 +60,13 @@ class request {
       path: this.parsed.path,
       method: this.method
     };
+
+    // Use HTTPS client if specified
+    if (this.parsed.protocol === 'https:') {
+      client = https;
+      options.port = '443';
+      options.minVersion = 'TLSv1'; // Defaults to TLSv1.2 which may not be supported by whichever endpoint
+    }
 
     // Set body headers if necessary
     if (this.encoded) {

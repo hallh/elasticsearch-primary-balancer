@@ -13,7 +13,17 @@ let ellipse = 0;
 // Funcs
 
 function startRun() {
-  const req = new request('http://localhost:9200/_cat/shards?h=index,shard,prirep,state,store,node', (error, body) => {
+  const opts = {
+    url: `${args.host}/_cat/shards?h=index,shard,prirep,state,store,node`
+  };
+
+  if (args.auth) {
+    opts.headers = {
+      'Authorization': `Basic ${args.auth}`
+    };
+  }
+
+  const req = new request(opts, (error, body) => {
     if (error) {
       throw error;
     }
@@ -87,8 +97,8 @@ function run(initial_state) {
 
 
 function submitMove(cmds, cb) {
-  const prep = {
-    url: 'http://localhost:9200/_cluster/reroute',
+  const opts = {
+    url: `${args.host}/_cluster/reroute`,
     method: 'POST',
     body: cmds,
     headers: {
@@ -96,12 +106,26 @@ function submitMove(cmds, cb) {
     }
   };
 
-  const req = new request(prep, cb);
+  if (args.auth) {
+    opts.headers.Authorization = `Basic ${args.auth}`
+  }
+
+  const req = new request(opts, cb);
 }
 
 
 function checkIfReady() {
-  const req = new request('http://localhost:9200/_cat/shards', (error, body) => {
+  const opts = {
+    url: `${args.host}/_cat/shards`
+  };
+
+  if (args.auth) {
+    opts.headers = {
+      'Authorization': `Basic ${args.auth}`
+    }
+  }
+
+  const req = new request(opts, (error, body) => {
     if (error) {
       console.log("[!] Failed to get state, trying again in 5s:", error);
       return setTimeout(() => { process.nextTick(checkIfReady); }, 5000);
