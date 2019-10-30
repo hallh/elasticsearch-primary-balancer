@@ -31,20 +31,21 @@ function run(initial_state) {
   let winner = game.winner(state);
   let play;
 
-  console.log(`[+] Calculating next move, simulation time: ${args.simtime} seconds.`);
+  console.log(`[+] Using threshold: ${game.threshold.toFixed(3)}`)
 
   // state.player = 1;
 
   while (winner === null) {
+    console.log(`\n[+] Calculating next move, simulation time: ${args.simtime} seconds.`);
     mcts.runSearch(state, args.simtime || 10);
 
     let stats = mcts.getStats(state)
 
-    console.log(" > stats:", stats.n_plays, stats.n_wins)
+    console.log("  > stats:", stats.n_plays, stats.n_wins)
 
     play = mcts.bestPlay(state, "robust")
 
-    console.log(" > chosen play:", (play ? play.pretty() : null))
+    console.log("  > chosen play:", (play ? play.pretty() : null))
 
     state = game.nextState(state, play)
     winner = game.winner(state)
