@@ -2,6 +2,7 @@
 
 const DRYRUN    = 'dryrun';
 const SUGGEST   = 'suggest';
+const BALANCE   = 'balance';
 const MAP       = 'map';
 const AZMAP     = 'azmap';
 const SIMTIME   = 'simtime';
@@ -21,10 +22,11 @@ class parseArgs {
       throw new Error('Missing required option: HOST[:PORT].');
     }
 
-    // Define flags
-    this.flags = {
-      '--dry-run': DRYRUN,
-      '--suggest': SUGGEST
+    // Define actions
+    this.actions = {
+      'dry-run': DRYRUN,
+      'suggest': SUGGEST,
+      'balance': BALANCE
     };
 
     // Define options
@@ -53,8 +55,8 @@ class parseArgs {
         i++;
       }
 
-      else if (this.isFlag(wargs[i])) {
-        this[this.flags[wargs[i]]] = true;
+      else if (this.isAction(wargs[i])) {
+        this[this.actions[wargs[i]]] = true;
       }
 
       else {
@@ -66,8 +68,8 @@ class parseArgs {
     this.validate();
   }
 
-  isFlag(value) {
-    return Object.keys(this.flags).indexOf(value) > -1;
+  isAction(value) {
+    return Object.keys(this.actions).indexOf(value) > -1;
   }
 
   isOption(value) {
@@ -75,18 +77,22 @@ class parseArgs {
   }
 
   validate() {
-    // Delete unnecessary objects
-    delete this.flags;
-    delete this.options;
-
     // Make sure we have an endpoint for ES
     if (!this.host) {
       throw new Error(`Invalid ES host option: ${this.host}`);
     }
 
-    // Dryrun and suggest don't go hand in hand
-    if (this[DRYRUN] && this[SUGGEST]) {
-      throw new Error('You cannot run dry-run and suggest together');
+    // Can only perform one action
+    const actions = [
+      this[DRYRUN],
+      this[SUGGEST],
+      this[BALANCE]
+    ];
+
+    if (actions.filter(a => !!a).length !== 1) {
+      throw new Error(`You must select one these actions: ${Object.keys(this.actions).join(', ')}`);
+    } else {
+      this.action = this[DRYRUN] || this[SUGGEST] || this[BALANCE];
     }
 
     // Validate the AZ map if specified
@@ -128,6 +134,11 @@ class parseArgs {
     }
 
     // Don't validate auth
+
+
+    // Delete unneeded objects
+    delete this.actions;
+    delete this.options;
   }
 }
 

@@ -6,9 +6,15 @@ const Game_ES = require('./src/game-es.js')
 const MonteCarlo = require('./src/monte-carlo.js')
 
 // Setup
-
-const args = new parseArgs(process.argv);
+let args;
 let ellipse = 0;
+
+try {
+  args = new parseArgs(process.argv);
+} catch (e) {
+  console.log(`[!] ${e.message}\n`);
+  return process.exit(-1);
+}
 
 // Funcs
 
