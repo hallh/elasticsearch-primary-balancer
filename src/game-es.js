@@ -4,29 +4,20 @@ const State = require('./state-es.js');
 const Play = require('./play-es.js');
 
 const TARGET_INDEX  = /^(achoo_appv4|rollup_2019.10)$/;
-const PCT_THRESHOLD = 0.18; // Balance hosts with > 15% primaries
-
-const AZ_MAPPING = {
-  "0": "1a",
-  "1": "1b",
-  "2": "1c",
-  "3": "1a",
-  "4": "1b",
-  "5": "1c",
-  "6": "1a",
-  "7": "1b",
-  "8": "1c"
-};
+const PCT_THRESHOLD = 0.13; // Balance hosts with > 15% primaries
 
 /** Class representing the game. */
 class Game_ES {
 
-  /** Save the shard dist. */  
-  constructor(initial_state) {
+  /** Save the shard dist. */
+  constructor(initial_state, options) {
     if (!initial_state) {
       throw new Error('Shard data is required on startup.');
     }
 
+    this.target_index = options.index   || null;
+    this.az_mapping = options.azmap     || {};
+    this.threshold = options.threshold  || null;
     this.initial_state = initial_state;
   }
 
@@ -42,8 +33,8 @@ class Game_ES {
       const index   = split[0];
       const shard   = `${split[0]}:${split[1]}`;
       const primary = (split[2] === 'p');
-      const host    = split[5].split('-').slice(-1).pop();
-      const az      = AZ_MAPPING[host];
+      const host    = split[5];
+      const az      = this.az_mapping[host] || null;
 
       return {
         index,
@@ -68,15 +59,14 @@ class Game_ES {
     };
 
     const hosts = getOverloadedHosts(state.shards);
-    const actually_overloaded_hosts = hosts.filter(h => h.v >= (state.shards.filter(s => s.primary).length * PCT_THRESHOLD));
+    const actually_overloaded_hosts = hosts.filter(h => h.v > (state.shards.filter(s => s.primary).length * PCT_THRESHOLD));
 
     if (actually_overloaded_hosts.length === 0) {
       return [];
     }
 
     if (state.player === 1) {
-      const movements = getPossibleMovements(hosts, state.shards).map(s => new Play(state.player, s.moves));
-      return movements;
+      return getPossibleMovements(hosts, state.shards).map(s => new Play(state.player, s.moves));
     } else {
       const last_play = state.playHistory[state.playHistory.length - 1];
 
@@ -167,7 +157,7 @@ class Game_ES {
     };
 
     const hosts = getOverloadedHosts(state.shards);
-    const actually_overloaded_hosts = hosts.filter(h => h.v >= (state.shards.filter(s => s.primary).length * PCT_THRESHOLD));
+    const actually_overloaded_hosts = hosts.filter(h => h.v > (state.shards.filter(s => s.primary).length * PCT_THRESHOLD));
 
     if (actually_overloaded_hosts.length === 0) {
       return 1;
@@ -190,7 +180,7 @@ function getOverloadedHosts(shards) {
 
   const init = {
     total: set.length,
-    hosts: Object.assign({}, ...Object.keys(AZ_MAPPING).map(h => ({ [h]: 0 })))
+    hosts: Object.assign({}, ...shards.map(h => ({ [h.host]: 0 })))
   };
 
   const hosts = set.reduce(reduceHosts, init);
@@ -209,7 +199,7 @@ function reduceHosts(a, i) {
 function getPossibleMovements(hosts, shards) {
   const shards_copy       = clone(shards);
   const primary_shards    = shards_copy.filter(s => s.primary);
-  const overloaded_hosts  = hosts.filter(h => h.v >= (primary_shards.length * PCT_THRESHOLD)).sort((a, b) => a.v - b.v).map(h => h.h);
+  const overloaded_hosts  = hosts.filter(h => h.v > (primary_shards.length * PCT_THRESHOLD)).sort((a, b) => b.v - a.v).map(h => h.h);
   const target_shards     = primary_shards.filter(s => overloaded_hosts[0] === s.host); // Only move on most affected host
 
   // Map shards to hosts

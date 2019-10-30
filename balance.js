@@ -8,8 +8,9 @@ const MonteCarlo = require('./src/monte-carlo.js')
 // Setup
 
 const args = new parseArgs(process.argv);
+let ellipse = 0;
 
-console.log(args);
+// Funcs
 
 function startRun() {
   const req = new request('http://localhost:9200/_cat/shards?h=index,shard,prirep,state,store,node', (error, body) => {
@@ -22,20 +23,20 @@ function startRun() {
 }
 
 function run(initial_state) {
-  let game = new Game_ES(initial_state)
+  let game = new Game_ES(initial_state, args)
   let mcts = new MonteCarlo(game)
 
-  let state = game.start()
-  let winner = game.winner(state)
+  let state = game.start();
+  let root_hash = state.hash();
+  let winner = game.winner(state);
   let play;
 
-  console.log("calculating next move")
+  console.log(`[+] Calculating next move, simulation time: ${args.simtime} seconds.`);
 
-  // Only run play for player, choose random for adversary
   // state.player = 1;
 
   while (winner === null) {
-    mcts.runSearch(state, 10)
+    mcts.runSearch(state, args.simtime || 10);
 
     let stats = mcts.getStats(state)
 
@@ -49,30 +50,34 @@ function run(initial_state) {
     winner = game.winner(state)
   }
 
-  console.log()
-
+  // Completed, output result
   if (winner === -1) {
     console.log("[!] Impossible to achieve desired balance, try a higher threshold.");
   } else {
     let moves = state.playHistory.filter(p => p.player === 1).length;
-    let stats = mcts.getStats(mcts.nodes.get('p,').state);
-    let conf = (stats.n_wins / stats.n_plays * 100).toFixed(2);
 
-    console.log(`[+] Simulation succeeded in ${moves} moves, with an estimated ${conf}% probability of success.`);
+    if (moves === 0) {
+      console.log("[+] No moves made, cluster already balanced.");
+    } else {
+      let stats = mcts.getStats(mcts.nodes.get(root_hash).state);
+      let conf = (stats.n_wins / stats.n_plays * 100).toFixed(2);
+
+      console.log(`[+] Simulation succeeded in ${moves} moves, with an estimated ${conf}% probability of success.`);
+    }
   }
 
-  submitMove(play.commands(), (error, body) => {
-    let res = JSON.parse(body);
-
-    if (error || res.acknowledged !== true) {
-      console.log(JSON.stringify(error || res, null, 2));
-      throw new Error('RELOCATION REQUEST FAILED');
-    }
-
-    console.log("SUCCESS, waiting to next check")
-
-    setTimeout(() => { process.nextTick(checkIfReady); }, 5000);
-  });
+  // submitMove(play.commands(), (error, body) => {
+  //   let res = JSON.parse(body);
+  //
+  //   if (error || res.acknowledged !== true) {
+  //     console.log(JSON.stringify(error || res, null, 2));
+  //     throw new Error('RELOCATION REQUEST FAILED');
+  //   }
+  //
+  //   console.log("SUCCESS, waiting to next check")
+  //
+  //   setTimeout(() => { process.nextTick(checkIfReady); }, 5000);
+  // });
 }
 
 
@@ -93,16 +98,20 @@ function submitMove(cmds, cb) {
 function checkIfReady() {
   const req = new request('http://localhost:9200/_cat/shards', (error, body) => {
     if (error) {
-      console.log("Faied to get state, trying again in 5s:", error);
+      console.log("[!] Failed to get state, trying again in 5s:", error);
       return setTimeout(() => { process.nextTick(checkIfReady); }, 5000);
     }
 
     if (body.split('\n').find(line => line.match(/RELOCATING/))) {
-      console.log("relocating - wait")
+      ellipse = (ellipse % 3) + 1;
+
+      process.stdout.clearLine();
+      process.stdout.write(`\r[-] Waiting for relocation to complete${".".repeat(ellipse)}`);
+
       return setTimeout(() => { process.nextTick(checkIfReady); }, 5000);
     }
 
-    console.log("not relocating - GO!")
+    console.log("\n[+] Not relocating - GO!")
     startRun();
   });
 }

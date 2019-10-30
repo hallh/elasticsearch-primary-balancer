@@ -16,8 +16,6 @@ class State_ES {
   hash() {
     return "p," + this.playHistory.map(play => play.pretty()).join(',')
   }
-
-  // Note: If hash uses board, multiple parents possible
 }
 
 module.exports = State_ES

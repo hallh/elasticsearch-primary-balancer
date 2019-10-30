@@ -36,6 +36,9 @@ class parseArgs {
       '--auth': AUTH
     };
 
+    // Set defaults
+    this[SIMTIME] = "10";
+
     // Get ES host and create options object
     this.host = wargs.splice(-1).pop();
 
