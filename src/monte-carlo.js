@@ -173,17 +173,12 @@ class MonteCarlo {
     let state = node.state
     let winner = this.game.winner(state)
 
-    let i = 0;
-
     while (winner === null) {
       let plays = this.game.legalPlays(state)
       let play = plays[Math.floor(Math.random() * plays.length)]
       state = this.game.nextState(state, play)
       winner = this.game.winner(state)
-      i++;
     }
-
-    // console.log("Finished after", i, "moves");
 
     return winner
   }

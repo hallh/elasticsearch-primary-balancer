@@ -3,8 +3,6 @@
 const State = require('./state-es.js');
 const Play = require('./play-es.js');
 
-const TARGET_INDEX  = /^(achoo_appv4|rollup_2019.10)$/;
-
 /** Class representing the game. */
 class Game_ES {
 
@@ -43,7 +41,9 @@ class Game_ES {
 
     // Save initial state
     this.initital_state = initial_state;
-    this.initial_state_shards = rows.filter(r => !!r && r.index.match(TARGET_INDEX));
+
+    // Save target shards, ignore system indeces
+    this.initial_state_shards = rows.filter(r => !!r && !r.index.startsWith('.') && (!this.target_index || this.target_index.indexOf(r.index) > -1));
 
     // Determine threshold for perfect balance automatically if not specified
     if (!this.threshold) {
@@ -111,9 +111,11 @@ class Game_ES {
     let newHistory = state.playHistory.slice(); // 1-deep copy
     newHistory.push(play)
 
-    let newShards = JSON.parse(JSON.stringify(state.shards));
+    let newShards = clone(state.shards);
     const logger = [];
 
+
+    // Process moves
     play.moves.forEach((m) => {
       const src_idx  = newShards.findIndex(s => s.shard === m.source.shard && s.host === m.source.host);
       const dst_idx  = newShards.findIndex(s => s.shard === m.dest.shard && s.host === m.dest.host);
@@ -284,7 +286,8 @@ function getPossibleMovements(hosts, shards, threshold) {
     }));
   });
 
-  return movements;
+  // Choose random moves to better support balancing a large number of shards
+  return shuffle(movements).slice(0, 20);
 }
 
 
@@ -315,6 +318,11 @@ function reduceHostMap(a, i) {
 
 function checkSafeReplicaPositions(primary, replica_map, hosts, num_primaries, threshold) {
   const host_map = Object.assign({}, ...hosts.map(h => ({ [h.h]: h.v })));
+
+  // Stupid workaround: if primary has no replicas, consider all hosts to be bad
+  if (!replica_map[primary.shard]) {
+    return Object.keys(host_map);
+  }
 
   const bad_hosts = replica_map[primary.shard].filter((host) => {
     return (host_map[host] + 1) > num_primaries * threshold;
