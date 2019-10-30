@@ -31,6 +31,10 @@ function run(initial_state) {
   let winner = game.winner(state);
   let play;
 
+  if (!args.threshold) {
+    console.log("[-] No threshold specified, will try to achieve perfect balance.");
+  }
+
   console.log(`[+] Using threshold: ${game.threshold.toFixed(3)}`)
 
   // state.player = 1;
