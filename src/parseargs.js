@@ -56,7 +56,7 @@ class parseArgs {
       }
 
       else if (this.isAction(wargs[i])) {
-        this[this.actions[wargs[i]]] = true;
+        this[this.actions[wargs[i]]] = wargs[i];
       }
 
       else {
