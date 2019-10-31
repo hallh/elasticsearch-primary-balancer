@@ -46,7 +46,7 @@ class request {
 
     // Parse body
     if (this.body) {
-      this.encoded = (typeof body === 'string' ? body : JSON.stringify(this.body));
+      this.encoded = (typeof this.body === 'string' ? this.body : JSON.stringify(this.body));
     }
   }
 

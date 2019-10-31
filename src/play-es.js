@@ -20,26 +20,26 @@ class Play_ES {
   }
 
   commands() {
-    return {
+    return JSON.stringify({
       "commands": [].concat.apply([], this.moves.map((m) => [
         {
           "move": {
             "index": m.source.index,
             "shard": m.source.shard.split(':')[1],
-            "from_node": "elasticsearch-data-v5-" + m.source.host,
-            "to_node":"elasticsearch-data-v5-" + m.dest.host
+            "from_node": m.source.host,
+            "to_node": m.dest.host
           }
         },
         {
           "move": {
             "index": m.dest.index,
             "shard": m.dest.shard.split(':')[1],
-            "from_node": "elasticsearch-data-v5-" + m.dest.host,
-            "to_node":"elasticsearch-data-v5-" + m.source.host
+            "from_node": m.dest.host,
+            "to_node": m.source.host
           }
         }
       ]))
-    };
+    });
   }
 }
 

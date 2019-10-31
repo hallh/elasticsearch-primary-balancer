@@ -114,7 +114,6 @@ class Game_ES {
     let newShards = clone(state.shards);
     const logger = [];
 
-
     // Process moves
     play.moves.forEach((m) => {
       const src_idx  = newShards.findIndex(s => s.shard === m.source.shard && s.host === m.source.host);
