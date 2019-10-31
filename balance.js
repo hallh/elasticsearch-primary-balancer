@@ -38,14 +38,14 @@ function startRun() {
   });
 }
 
+
 function run(initial_state) {
   let game = new Game_ES(initial_state, args)
   let mcts = new MonteCarlo(game)
 
   let state = game.start();
   let root_hash = state.hash();
-  let winner = game.winner(state);
-  let play;
+  let stats, conf, moves = 0;
 
   if (!args.threshold) {
     console.log("[-] No threshold specified, will try to achieve perfect balance.");
@@ -53,52 +53,136 @@ function run(initial_state) {
 
   console.log(`[+] Using threshold: ${game.threshold.toFixed(3)}`)
 
-  // state.player = 1;
+  // Run command
+  switch (args.action) {
+    case 'dry-run':
+      state = dryRun(mcts, game, state);
+      break;
+    case 'suggest':
+      state = suggest(mcts, game, state);
+      break;
+    case 'balance':
+      state = balance(mcts, game, state);
+      break;
+    default:
+      throw new Error('Unsupported action.');
+  }
 
+  // Prepare stats output
+  let winner = game.winner(state);
+  let root_node = mcts.nodes.get(root_hash);
+
+  if (root_node) {
+    stats = mcts.getStats(root_node.state);
+    conf = (stats.n_wins / stats.n_plays * 100).toFixed(2);
+    moves = state.playHistory.filter(p => p.player === 1).length;
+  }
+
+  // Output result
+  console.log("\n" + decideResult(args.action, winner, moves, conf, state) + "\n");
+}
+
+
+function suggest(mcts, game, state, log) {
+  // Don't suggest if nothing is to be done
+  if (game.winner(state) !== null) {
+    return state;
+  }
+
+  // Don't loop, only the first move will be simulated
+  mcts.runSearch(state, args.simtime);
+
+  // Get stats and best play
+  let stats = mcts.getStats(state);
+  let play = mcts.bestPlay(state, "robust");
+
+  // Print stats for move if log is true
+  if (log) {
+    console.log("  > stats:", stats.n_plays, stats.n_wins);
+    console.log("  > chosen play:", (play ? play.pretty() : null));
+  }
+
+  return game.nextState(state, play);
+}
+
+
+function dryRun(mcts, game, state) {
+  let winner = null;
+
+  // Continue until solution is found or there are no more moves to be made
   while (winner === null) {
     console.log(`\n[+] Calculating next move, simulation time: ${args.simtime} seconds.`);
-    mcts.runSearch(state, args.simtime || 10);
-
-    let stats = mcts.getStats(state)
-
-    console.log("  > stats:", stats.n_plays, stats.n_wins)
-
-    play = mcts.bestPlay(state, "robust")
-
-    console.log("  > chosen play:", (play ? play.pretty() : null))
-
-    state = game.nextState(state, play)
-    winner = game.winner(state)
+    state = suggest(mcts, game, state, true);
+    winner = game.winner(state);
   }
 
-  // Completed, output result
-  if (winner === -1) {
-    console.log("[!] Impossible to achieve desired balance, try a higher threshold.");
-  } else {
-    let moves = state.playHistory.filter(p => p.player === 1).length;
+  return state;
+}
 
-    if (moves === 0) {
-      console.log("[+] No moves made, cluster already balanced.");
-    } else {
-      let stats = mcts.getStats(mcts.nodes.get(root_hash).state);
-      let conf = (stats.n_wins / stats.n_plays * 100).toFixed(2);
 
-      console.log(`[+] Simulation succeeded in ${moves} moves, with an estimated ${conf}% probability of success.`);
+function balance(mcts, game, state) {
+  state = suggest(mcts, game, state);
+  let play = state.playHistory[0];
+
+  // Submit move async
+  submitMove(play.commands(), (error, body) => {
+    let res = JSON.parse(body);
+
+    if (error || res.acknowledged !== true) {
+      console.log(error, res);
+      throw new Error('RELOCATION REQUEST FAILED');
     }
+
+    setTimeout(() => { process.nextTick(checkIfReady); }, 5000);
+  });
+
+  return state;
+}
+
+
+function decideResult(action, winner, moves, conf, state) {
+  // No need for custom output if nothing was done
+  if (winner === 1 && moves === 0) {
+    return "[+] No moves made, cluster already balanced.";
   }
 
-  // submitMove(play.commands(), (error, body) => {
-  //   let res = JSON.parse(body);
-  //
-  //   if (error || res.acknowledged !== true) {
-  //     console.log(JSON.stringify(error || res, null, 2));
-  //     throw new Error('RELOCATION REQUEST FAILED');
-  //   }
-  //
-  //   console.log("SUCCESS, waiting to next check")
-  //
-  //   setTimeout(() => { process.nextTick(checkIfReady); }, 5000);
-  // });
+  // Generate output
+
+  if (action === 'dry-run') {
+    return decideDryRunResult(winner, moves, conf);
+  }
+
+  if (action === 'suggest') {
+    return decideSuggestResult(state, conf);
+  }
+
+  if (action === 'balance') {
+    return decideBalanceResult(state, conf);
+  }
+}
+
+
+function decideDryRunResult(winner, moves, conf) {
+  // Fail
+  if (winner === -1) {
+    return "[!] Impossible to achieve desired balance, try a higher threshold.";
+  }
+  // Success
+  else {
+    return `[+] Simulation succeeded in ${moves} moves, with an estimated ${conf}% probability of success.`;
+  }
+}
+
+
+function decideSuggestResult(state, conf) {
+  let play = state.playHistory[0];
+  return `Play: ${play.pretty()}\nConfidence: ${conf}%\nCurl command:\n\ncurl '${args.host}/_cluster/reroute' -X POST -H 'Content-Type: application/json' -d '${play.commands()}'\n`;
+}
+
+
+function decideBalanceResult(state, conf) {
+  let play = state.playHistory[0];
+  return `Play: ${play.pretty()}\nConfidence: ${conf}%\n`;
 }
 
 
@@ -121,10 +205,17 @@ function submitMove(cmds, cb) {
 
 
 function checkIfReady() {
+  // Only wait if we're actively balancing. No need to wait when simulating.
+  if (args.action !== 'balance') {
+    return startRun();
+  }
+
+  // Prep request
   const opts = {
     url: `${args.host}/_cat/shards`
   };
 
+  // Add auth if configured
   if (args.auth) {
     opts.headers = {
       'Authorization': `Basic ${args.auth}`
