@@ -6,6 +6,7 @@ const Game_ES = require('./src/game-es.js')
 const MonteCarlo = require('./src/monte-carlo.js')
 
 // Setup
+let refresh = 1000;
 let args;
 let ellipse = 0;
 let didprintvars = false;
@@ -52,6 +53,8 @@ function run(initial_state) {
     didprintvars = true;
 
     if (!args.threshold) {
+      process.stdout.clearLine();
+      console.log();
       console.log("[-] No threshold specified, will try to achieve perfect balance.");
     }
 
@@ -90,7 +93,7 @@ function run(initial_state) {
   }
 
   // Output result
-  console.log("\n" + decideResult(args.action, winner, moves, conf, state, game) + "\n");
+  console.log(decideResult(args.action, winner, moves, conf, state, game));
 }
 
 
@@ -100,19 +103,24 @@ function suggest(mcts, game, state, log) {
     return state;
   }
 
-  // Don't loop, only the first move will be simulated
+  // Simulate moves
   mcts.runSearch(state, args.simtime);
 
-  // Get stats and best play
-  let stats = mcts.getStats(state);
-  let play = mcts.bestPlay(state, "robust");
+  // Choose best play
+  try {
+    let play = mcts.bestPlay(state, "robust");
 
-  // Print stats for move if log is true
-  if (log) {
-    console.log(play.pretty());
+    // Print stats for move if log is true
+    if (log) {
+      console.log(play.pretty());
+    }
+
+    return game.nextState(state, play);
+  } catch (e) {
+    console.log(`[!] There wasn't enough time to simulate a solution to its completion, you need to increase the simulation time with the '--simulation-time' option.`);
+    console.log();
+    return process.exit(0);
   }
-
-  return game.nextState(state, play);
 }
 
 
@@ -133,6 +141,10 @@ function balance(mcts, game, state) {
   state = suggest(mcts, game, state);
   let play = state.playHistory[0];
 
+  if (!play) {
+    return state;
+  }
+
   // Submit move async
   submitMove(play.commands(), (error, body) => {
     let res = JSON.parse(body);
@@ -142,7 +154,7 @@ function balance(mcts, game, state) {
       throw new Error('RELOCATION REQUEST FAILED');
     }
 
-    setTimeout(() => { process.nextTick(checkIfReady); }, 5000);
+    setTimeout(() => { process.nextTick(checkIfReady); }, refresh);
   });
 
   return state;
@@ -175,24 +187,24 @@ function decideDryRunResult(state, winner, moves, conf, game) {
   // Fail
   if (winner === -1) {
     const append = (moves > 0 ? `\n\nAchieved state:\n${game.printCurrentClusterState(state.shards)}` : '');
-    return `[!] Impossible to achieve desired balance, try a higher threshold.${append}`;
+    return `\n[!] Impossible to achieve desired balance, try a higher threshold.${append}`;
   }
   // Success
   else {
-    return `[+] Simulation succeeded in ${moves} moves, with an estimated ${conf}% chance of success.\n\nFinal state:\n${game.printCurrentClusterState(state.shards)}`;
+    return `\n[+] Simulation succeeded in ${moves} moves, with an estimated ${conf}% chance of success.\n\nFinal state:\n${game.printCurrentClusterState(state.shards)}`;
   }
 }
 
 
 function decideSuggestResult(state, conf) {
   let play = state.playHistory[0];
-  return `Play:\n${play.pretty()}\n\ncurl '${args.host}/_cluster/reroute' -X POST -H 'Content-Type: application/json' -d '${play.commands()}'\n`;
+  return `[+] Suggested move:\n${play.pretty()}\n\ncurl '${args.host}/_cluster/reroute' -X POST -H 'Content-Type: application/json' -d '${play.commands()}'\n`;
 }
 
 
 function decideBalanceResult(state, conf, game) {
   let play = state.playHistory[0];
-  return `${play.pretty()}\n\nNext state:${game.printCurrentClusterState(state.shards)}`;
+  return `\r${play.pretty()}`;
 }
 
 
@@ -235,7 +247,7 @@ function checkIfReady() {
   const req = new request(opts, (error, body) => {
     if (error) {
       console.log("[!] Failed to get state, trying again in 5s:", error);
-      return setTimeout(() => { process.nextTick(checkIfReady); }, 5000);
+      return setTimeout(() => { process.nextTick(checkIfReady); }, refresh);
     }
 
     if (body.split('\n').find(line => line.match(/RELOCATING/))) {
@@ -244,10 +256,10 @@ function checkIfReady() {
       process.stdout.clearLine();
       process.stdout.write(`\r[-] Waiting for relocation to complete${".".repeat(ellipse)}`);
 
-      return setTimeout(() => { process.nextTick(checkIfReady); }, 5000);
+      return setTimeout(() => { process.nextTick(checkIfReady); }, refresh);
     }
 
-    console.log("\n[+] Not relocating - GO!")
+    ellipse = 0;
     startRun();
   });
 }
