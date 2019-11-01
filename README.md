@@ -17,6 +17,7 @@ This tool will only address the issue with primary shards being bunched up on a 
 3. The tool will ensure that all moves will not further imbalance other "overloaded" nodes. Meaning it'll prioritise swapping primaries with replicas located on low-load nodes, or secondly, attempt to move replicas from high-load to low-load nodes before moving the primary.
 4. The tool will swap primaries with replicas of other shards in order to keep the cluster state balanced and not risk any disk or shard allocation skew.
 5. No NPM dependencies.
+6. Pretty output.
 
 ### Running
 

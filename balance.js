@@ -51,7 +51,10 @@ function run(initial_state) {
     console.log("[-] No threshold specified, will try to achieve perfect balance.");
   }
 
-  console.log(`[+] Using threshold: ${game.threshold.toFixed(3)}`)
+  console.log();
+  console.log(`[+] Using threshold: ${game.threshold.toFixed(3)}`);
+  console.log(`[+] Simulation time: ${args.simtime} seconds.`);
+  console.log();
 
   // Run command
   switch (args.action) {
@@ -98,8 +101,7 @@ function suggest(mcts, game, state, log) {
 
   // Print stats for move if log is true
   if (log) {
-    console.log("  > stats:", stats.n_plays, stats.n_wins);
-    console.log("  > chosen play:", (play ? play.pretty() : null));
+    console.log((state.player === 1 ? "\n" : ""), play.pretty((stats.n_wins / stats.n_plays * 100).toFixed(2)));
   }
 
   return game.nextState(state, play);
@@ -111,7 +113,6 @@ function dryRun(mcts, game, state) {
 
   // Continue until solution is found or there are no more moves to be made
   while (winner === null) {
-    console.log(`\n[+] Calculating next move, simulation time: ${args.simtime} seconds.`);
     state = suggest(mcts, game, state, true);
     winner = game.winner(state);
   }
@@ -176,13 +177,13 @@ function decideDryRunResult(winner, moves, conf) {
 
 function decideSuggestResult(state, conf) {
   let play = state.playHistory[0];
-  return `Play: ${play.pretty()}\nConfidence: ${conf}%\nCurl command:\n\ncurl '${args.host}/_cluster/reroute' -X POST -H 'Content-Type: application/json' -d '${play.commands()}'\n`;
+  return `Play:\n${play.pretty(conf)}\n\ncurl '${args.host}/_cluster/reroute' -X POST -H 'Content-Type: application/json' -d '${play.commands()}'\n`;
 }
 
 
 function decideBalanceResult(state, conf) {
   let play = state.playHistory[0];
-  return `Play: ${play.pretty()}\nConfidence: ${conf}%\n`;
+  return `Play:\n${play.pretty(conf)}\n`;
 }
 
 

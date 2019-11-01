@@ -118,7 +118,7 @@ class parseArgs {
 
       this[SIMTIME] = parseInt(this[SIMTIME]);
     } else {
-      this[SIMTIME] = 10;
+      this[SIMTIME] = 10; // Default to 10s
     }
 
     // Split index list into array
