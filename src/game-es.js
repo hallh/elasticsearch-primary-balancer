@@ -47,7 +47,7 @@ class Game_ES {
     this.initial_state_shards = rows.filter(r => !!r && !r.index.startsWith('.') && (!this.target_index || this.target_index.indexOf(r.index) > -1));
 
     // Save the number of primaries
-    const hosts = getHosts(this.initial_state_shards);
+    const hosts = getHostToPrimaryMap(this.initial_state_shards);
     this.num_primaries = hosts.total;
 
     // Determine threshold for perfect balance automatically if not specified
@@ -77,28 +77,7 @@ class Game_ES {
       return [];
     }
 
-    if (state.player === 1) {
-      return getPossibleMovements(hosts, state.shards, this.threshold).map(s => new Play(state.player, s.moves));
-    } else {
-      const last_play = state.playHistory[state.playHistory.length - 1];
-
-      // No more moves if previous player did nothing
-      if (last_play.player === -1) {
-        return [];
-      }
-
-      const last_move = last_play.moves[last_play.moves.length - 1];
-      const moved_shard = last_move.source.shard;
-      const dest_host = last_move.dest.host;
-
-      const replica_shards = state.shards.reduce((a, s) => (!s.primary && s.shard === moved_shard && s.host !== dest_host ? [...a, s] : a), []);
-      const movements = replica_shards.map(s => new Play(state.player, [{
-        source: s,
-        dest: Object.assign({}, s, { primary: last_move.source.primary })
-      }]));
-
-      return movements;
-    }
+    return getPossibleMovements(hosts, state.shards, this.threshold).map(s => new Play(state.player, s.moves));
   }
 
   /** Advance the given state and return it. */
@@ -113,7 +92,6 @@ class Game_ES {
     newHistory.push(play)
 
     let newShards = clone(state.shards);
-    const logger = [];
 
     // Process moves
     play.moves.forEach((m) => {
@@ -121,45 +99,13 @@ class Game_ES {
       const dst_idx  = newShards.findIndex(s => s.shard === m.dest.shard && s.host === m.dest.host);
       const src_host = newShards[src_idx].host;
       const dst_host = newShards[dst_idx].host;
-      const dst_primary = m.dest.primary;
 
-      // console.log(state.player === 1 ? `P[${m.source.primary},${m.dest.primary}][${m.source.shard}] : ${m.source.host} => ${m.dest.host}` : ` ^ U : ${m.source.host}`);
-
-      // Move source to dest
-      newShards[src_idx].primary = false;
+      // Move source to dest and vice versa
       newShards[src_idx].host = dst_host;
-
-      // Move dest to source
-      newShards[dst_idx].primary = dst_primary;
       newShards[dst_idx].host = src_host;
-
-      logger.push({
-        osrc: state.shards[src_idx],
-        odst: state.shards[dst_idx],
-        nsrc: newShards[src_idx],
-        ndst: newShards[dst_idx],
-      });
     });
 
-    // There were some issues where primaries would disappear during the simulation (forgot to prevent primaries being swapped with other primaries).
-    // This was added to figure out what happened, and I'm leaving it here as a precaution. At least until there are some unit tests covering this.
-    if ((state.player === -1 && newShards.filter(s => s.primary).length === (this.num_primaries - 1)) || (state.player === 1 &&  newShards.filter(s => s.primary).length === (this.num_primaries - 2))) {
-      console.log("---")
-      console.log(play.moves.length);
-      console.log(logger.map(l => `[${l.osrc.shard}:${l.osrc.primary}-${l.odst.shard}:${l.odst.primary}}](${l.osrc.host}-${l.odst.host})`))
-      console.log(logger.map(l => `[${l.nsrc.shard}:${l.nsrc.primary}-${l.ndst.shard}${l.ndst.primary}}](${l.nsrc.host}-${l.ndst.host})`))
-      console.log("---")
-      console.log( state.playHistory.map(p => "   - " + p.pretty()).join('\n'))
-      console.log("---");
-      console.log( newShards.filter(s => s.primary).length);
-      console.log( play.pretty())
-      console.log( getOverloadedHosts(newShards));
-      throw new Error('invalid number of primaries');
-    }
-
-    let newPlayer = -state.player
-
-    return new State(newHistory, newShards, newPlayer)
+    return new State(newHistory, newShards, state.player);
   }
 
   /** Return the winner of the game. */
@@ -177,17 +123,18 @@ class Game_ES {
       return 1;
     }
 
-    if (state.player === 1 && this.legalPlays(state).length === 0) {
+    if (this.legalPlays(state).length === 0) {
       return -1;
     }
 
     return null;
   }
 
+  /** Pretty print overloaded hosts */
   printCurrentClusterState(shards) {
-    const primary_hosts = getHosts(shards);
+    const primary_hosts = getHostToPrimaryMap(shards);
 
-    Object.keys(primary_hosts.hosts).sort().forEach((p) => {
+    const rows = Object.keys(primary_hosts.hosts).sort().map((p) => {
       const current_threshold = (primary_hosts.hosts[p] / primary_hosts.total);
       let color = "\x1b[2m";
 
@@ -195,8 +142,10 @@ class Game_ES {
         color = "\x1b[31m";
       }
 
-      console.log(` ${color}${p}:\t${primary_hosts.hosts[p]}\t(${current_threshold.toFixed(3)})\x1b[0m`);
+      return ` ${color}${p}:\t${primary_hosts.hosts[p]}\t(${current_threshold.toFixed(3)})\x1b[0m`;
     });
+
+    return rows.join('\n');
   }
 }
 
@@ -204,7 +153,7 @@ class Game_ES {
 // FUNCTIONS
 
 
-function getHosts(shards) {
+function getHostToPrimaryMap(shards) {
   const set = shards.filter(s => s.primary);
 
   const init = {
@@ -217,7 +166,7 @@ function getHosts(shards) {
 
 
 function getOverloadedHosts(shards) {
-  const hosts = getHosts(shards);
+  const hosts = getHostToPrimaryMap(shards);
   const target_hosts = Object.keys(hosts.hosts).map(h => ({ h: h, v: hosts.hosts[h] }));
 
   return target_hosts;
@@ -236,55 +185,19 @@ function getPossibleMovements(hosts, shards, threshold) {
   const overloaded_hosts  = hosts.filter(h => h.v > (primary_shards.length * threshold)).sort((a, b) => b.v - a.v).map(h => h.h);
   const target_shards     = primary_shards.filter(s => overloaded_hosts[0] === s.host); // Only move on most affected host
 
-  // Map shards to hosts
-  const replica_map = shards_copy.reduce(reduceReplicas, {});
+  // Map primarues to hosts
+  const primary_map = getHostToPrimaryMap(shards_copy);
 
   // Map hosts to shards
   const host_map = shards_copy.reduce(reduceHostMap, {});
-
-  // Get list of shards currently on overloaded hosts
-  const high_risk_shards = []; // primary_shards.filter(s => overloaded_hosts.indexOf(s.host) === -1).map(s => s.shard);
 
   // Save movements here
   const movements = [];
 
   // Perform checks
   target_shards.forEach((primary) => {
-    // Set variable for the target shard
-    let target_shard = primary;
-    let available_shards = clone(shards_copy);
-    let premoves = [];
-
-    // Check if any replica host would go over threshold should their replica be promoted
-    const bad_hosts = checkSafeReplicaPositions(target_shard, replica_map, hosts, primary_shards.length, threshold);
-
-    // Don't proceed moving this primary if two or more replicas are on overloaded hosts
-    if (bad_hosts.length >= 2) {
-      return;
-    }
-    // // If only 1 replica is on a bad host, move the replica to low-load host first and then perform the move
-    else if (bad_hosts.length === 1) {
-      const bad_replica = available_shards.find(s => !s.primary && s.shard === primary.shard && s.host === bad_hosts[0]);
-      const replica_swap_targets = findAllSwapTargets(bad_replica, available_shards, high_risk_shards, host_map);
-
-      if (replica_swap_targets.length === 0) {
-        return;
-      }
-
-      const replica_swap = replica_swap_targets[Math.floor(Math.random() * replica_swap_targets.length)];
-      available_shards = available_shards.filter(s =>
-        (s.shard !== replica_swap.shard && s.host !== replica_swap.host) &&
-        (s.shard !== bad_replica.shard && s.host !== bad_replica.host)
-      );
-
-      premoves.push[{
-        source: bad_replica,
-        dest: replica_swap
-      }];
-    }
-
     // Check if there's a host we can safely swap replicas with
-    const swap_targets = findAllSwapTargets(target_shard, available_shards, high_risk_shards, host_map);
+    const swap_targets = findAllSwapTargets(primary, shards_copy, host_map, primary_map, threshold);
 
     // Stop if we couldn't find a swap target
     if (swap_targets.length === 0) {
@@ -293,33 +206,16 @@ function getPossibleMovements(hosts, shards, threshold) {
 
     // Save potential moves to array
     swap_targets.forEach(st => movements.push({
-      moves: [
-        ...premoves,
-        {
-          source: target_shard,
+      moves: [{
+          source: primary,
           dest: st
-        }
-      ]
+      }]
     }));
   });
 
   // Choose random moves to better support balancing a large number of shards
+  // return movements;
   return shuffle(movements).slice(0, 20);
-}
-
-
-function reduceReplicas(a, i) {
-  // Don't count primaries
-  if (i.primary) {
-    return a;
-  }
-
-  if (!a[i.shard]) {
-    a[i.shard] = [];
-  }
-
-  a[i.shard].push(i.host);
-  return a;
 }
 
 
@@ -333,34 +229,13 @@ function reduceHostMap(a, i) {
 }
 
 
-function checkSafeReplicaPositions(primary, replica_map, hosts, num_primaries, threshold) {
-  const host_map = Object.assign({}, ...hosts.map(h => ({ [h.h]: h.v })));
-
-  // Stupid workaround: if primary has no replicas, consider all hosts to be bad
-  if (!replica_map[primary.shard]) {
-    return Object.keys(host_map);
-  }
-
-  const bad_hosts = replica_map[primary.shard].filter((host) => {
-    return (host_map[host] + 1) > num_primaries * threshold;
-  });
-
-  return bad_hosts;
-}
-
-
-function findAllSwapTargets(primary, shards, high_risk_shards, host_map) {
-  // Get all shards currently hosted on the primary's host
-  const primary_host_shards = shards.filter(s => s.host === primary.host).map(s => s.shard);
-
+function findAllSwapTargets(primary, shards, host_map, primary_map, threshold) {
   // Find shards in same AZ but on a different host
   const swap_candidates = shards.filter(s => s.az === primary.az && s.host !== primary.host);
 
-  // Filter high-risk shards that are hosted on other overloaded instances
-  const low_risk_shards = swap_candidates.filter(s => high_risk_shards.indexOf(s.shard) === -1);
-
   // Filter any shards we already have on the primary's host.
-  const foreign_shards = low_risk_shards.filter(s => primary_host_shards.indexOf(s.shard) === -1);
+  const primary_host_shards = shards.filter(s => s.host === primary.host).map(s => s.shard);
+  const foreign_shards = swap_candidates.filter(s => primary_host_shards.indexOf(s.shard) === -1 && s.host !== primary.host);
 
   // Do not allow swapping with primary shards
   const replicas_only = foreign_shards.filter(s => !s.primary);
@@ -368,7 +243,10 @@ function findAllSwapTargets(primary, shards, high_risk_shards, host_map) {
   // Do not allow sending a shard to a node that already has a replica of the same shard
   const non_conflicts = replicas_only.filter(s => host_map[s.host].indexOf(primary.shard) === -1);
 
-  return non_conflicts;
+  // Do not send primary to a host that'll be overloaded by it
+  const low_load_nodes = non_conflicts.filter(s => (primary_map.hosts[s.host] + 1) < primary_map.total * threshold);
+
+  return low_load_nodes;
 }
 
 

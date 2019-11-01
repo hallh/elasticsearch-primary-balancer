@@ -20,33 +20,21 @@ class Play_ES {
      reset: "\x1b[0m",
      bright: "\x1b[2m",
      dim: "\x1b[1m",
-     underscore: "\x1b[4m",
      fg: {
-      black: "\x1b[30m",
-      red: "\x1b[31m",
       green: "\x1b[32m",
-      yellow: "\x1b[33m",
       blue: "\x1b[34m",
       magenta: "\x1b[35m",
-      cyan: "\x1b[36m",
-      white: "\x1b[37m",
-      crimson: "\x1b[38m"
+      cyan: "\x1b[36m"
      }
     };
 
-    if (this.player === 1) {
-      return this.moves.map((m) => {
-        const stype = (m.source.primary ? "PRIMARY" : "REPLICA");
-        const dtype = (m.dest.primary ? "PRIMARY" : "REPLICA");
-        const est = (conf ? ` with ${conf}% confidence` : '');
+    return this.moves.map((m) => {
+      const stype = (m.source.primary ? "PRIMARY" : "REPLICA");
+      const dtype = (m.dest.primary ? "PRIMARY" : "REPLICA");
+      const est = (conf ? ` with ${conf}% confidence` : '');
 
-        return `${colors.fg.cyan}SWAPPING${colors.reset} ${colors.bright}[${stype}]${colors.reset} ${colors.fg.green}${m.source.host}/${colors.dim}${m.source.shard}${colors.reset} ${colors.bright}[${dtype}]${colors.reset} ${colors.fg.blue}${m.dest.host}/${colors.dim}${m.dest.shard}${colors.reset} ${est}`
-      }).join('\n');
-    } else {
-      return this.moves.map((m) => {
-        return `${colors.fg.magenta}PROMOTED${colors.reset} ${colors.bright}[REPLICA]${colors.reset} ${colors.fg.blue}${m.source.host}/${colors.reset}${colors.dim}${colors.fg.green}${m.source.shard}${colors.reset} ${colors.bright}[PRIMARY]${colors.reset}`
-      }).join('\n');
-    }
+      return ` ${colors.fg.cyan}SWAPPING${colors.reset} ${colors.bright}[${stype}]${colors.reset} ${colors.fg.green}${m.source.host}/${colors.dim}${m.source.shard}${colors.reset} ${colors.bright}[${dtype}]${colors.reset} ${colors.fg.blue}${m.dest.host}/${colors.dim}${m.dest.shard}${colors.reset} ${est}`
+    }).join('\n');
   }
 
   commands() {

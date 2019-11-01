@@ -60,7 +60,8 @@ function run(initial_state) {
     console.log(`[+] Simulation time: ${args.simtime} seconds.`);
     console.log();
     console.log("[+] Current cluster state:");
-    game.printCurrentClusterState(state.shards);
+    console.log(game.printCurrentClusterState(state.shards));
+    console.log();
   }
 
   // Run command
@@ -85,16 +86,11 @@ function run(initial_state) {
   if (root_node) {
     stats = mcts.getStats(root_node.state);
     conf = (stats.n_wins / stats.n_plays * 100).toFixed(2);
-    moves = state.playHistory.filter(p => p.player === 1).length;
+    moves = state.playHistory.length;
   }
 
   // Output result
-  console.log("\n" + decideResult(args.action, winner, moves, conf, state) + "\n");
-
-  if (args.action !== 'suggest') {
-    console.log("Achieved cluster state:");
-    game.printCurrentClusterState(state.shards);
-  }
+  console.log("\n" + decideResult(args.action, winner, moves, conf, state, game) + "\n");
 }
 
 
@@ -113,7 +109,7 @@ function suggest(mcts, game, state, log) {
 
   // Print stats for move if log is true
   if (log) {
-    console.log((state.player === 1 ? "\n" : ""), play.pretty());
+    console.log(play.pretty());
   }
 
   return game.nextState(state, play);
@@ -153,7 +149,7 @@ function balance(mcts, game, state) {
 }
 
 
-function decideResult(action, winner, moves, conf, state) {
+function decideResult(action, winner, moves, conf, state, game) {
   // No need for custom output if nothing was done
   if (winner === 1 && moves === 0) {
     return "[+] No moves made, cluster already balanced.";
@@ -162,7 +158,7 @@ function decideResult(action, winner, moves, conf, state) {
   // Generate output
 
   if (action === 'dry-run') {
-    return decideDryRunResult(state, winner, moves, conf);
+    return decideDryRunResult(state, winner, moves, conf, game);
   }
 
   if (action === 'suggest') {
@@ -170,32 +166,33 @@ function decideResult(action, winner, moves, conf, state) {
   }
 
   if (action === 'balance') {
-    return decideBalanceResult(state, conf);
+    return decideBalanceResult(state, conf, game);
   }
 }
 
 
-function decideDryRunResult(state, winner, moves, conf) {
+function decideDryRunResult(state, winner, moves, conf, game) {
   // Fail
   if (winner === -1) {
-    return "[!] Impossible to achieve desired balance, try a higher threshold.";
+    const append = (moves > 0 ? `\n\nAchieved state:\n${game.printCurrentClusterState(state.shards)}` : '');
+    return `[!] Impossible to achieve desired balance, try a higher threshold.${append}`;
   }
   // Success
   else {
-    return `[+] Simulation succeeded in ${moves} moves, with an estimated ${conf}% chance of success.`;
+    return `[+] Simulation succeeded in ${moves} moves, with an estimated ${conf}% chance of success.\n\nFinal state:\n${game.printCurrentClusterState(state.shards)}`;
   }
 }
 
 
 function decideSuggestResult(state, conf) {
   let play = state.playHistory[0];
-  return `Play:\n ${play.pretty()}\n\ncurl '${args.host}/_cluster/reroute' -X POST -H 'Content-Type: application/json' -d '${play.commands()}'\n`;
+  return `Play:\n${play.pretty()}\n\ncurl '${args.host}/_cluster/reroute' -X POST -H 'Content-Type: application/json' -d '${play.commands()}'\n`;
 }
 
 
-function decideBalanceResult(state, conf) {
+function decideBalanceResult(state, conf, game) {
   let play = state.playHistory[0];
-  return ` ${play.pretty()}`;
+  return `${play.pretty()}\n\nNext state:${game.printCurrentClusterState(state.shards)}`;
 }
 
 
