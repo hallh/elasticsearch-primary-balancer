@@ -55,7 +55,7 @@ function run(initial_state) {
     if (!args.threshold) {
       process.stdout.clearLine();
       console.log();
-      console.log("[-] No threshold specified, will try to achieve perfect balance.");
+      console.log("[-] No threshold specified, will try to achieve a perfect balance.");
     }
 
     console.log();
@@ -164,7 +164,7 @@ function balance(mcts, game, state) {
 function decideResult(action, winner, moves, conf, state, game) {
   // No need for custom output if nothing was done
   if (winner === 1 && moves === 0) {
-    return "[+] No moves made, cluster already balanced.";
+    return "\n\n[+] No moves needed, cluster already balanced.\n";
   }
 
   // Generate output
@@ -178,7 +178,7 @@ function decideResult(action, winner, moves, conf, state, game) {
   }
 
   if (action === 'balance') {
-    return decideBalanceResult(state, conf, game);
+    return decideBalanceResult(state, conf, game, winner);
   }
 }
 
@@ -186,12 +186,12 @@ function decideResult(action, winner, moves, conf, state, game) {
 function decideDryRunResult(state, winner, moves, conf, game) {
   // Fail
   if (winner === -1) {
-    const append = (moves > 0 ? `\n\nAchieved state:\n${game.printCurrentClusterState(state.shards)}` : '');
+    const append = (moves > 0 ? `\n\nAchieved state:\n${game.printCurrentClusterState(state.shards)}\n` : '');
     return `\n[!] Impossible to achieve desired balance, try a higher threshold.${append}`;
   }
   // Success
   else {
-    return `\n[+] Simulation succeeded in ${moves} moves, with an estimated ${conf}% chance of success.\n\nFinal state:\n${game.printCurrentClusterState(state.shards)}`;
+    return `\n[+] Simulation succeeded in ${moves} moves, with an estimated ${conf}% chance of success.\n\nFinal state:\n${game.printCurrentClusterState(state.shards)}\n`;
   }
 }
 
@@ -202,9 +202,15 @@ function decideSuggestResult(state, conf) {
 }
 
 
-function decideBalanceResult(state, conf, game) {
-  let play = state.playHistory[0];
-  return `\r${play.pretty()}`;
+function decideBalanceResult(state, conf, game, winner) {
+  if (winner === -1) {
+    return `\n[!] Impossible to achieve desired balance, try a higher threshold.\n\nAchieved state:\n${game.printCurrentClusterState(state.shards)}\n`;
+  } else if (winner === 0) {
+    return `\n[+] Balance succeeded in ${moves} moves.\n\nFinal state:\n${game.printCurrentClusterState(state.shards)}\n`;
+  } else {
+    let play = state.playHistory[0];
+    return `\r${play.pretty()}`;
+  }
 }
 
 
