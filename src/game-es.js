@@ -244,7 +244,7 @@ function findAllSwapTargets(primary, shards, host_map, primary_map, threshold) {
   const non_conflicts = replicas_only.filter(s => host_map[s.host].indexOf(primary.shard) === -1);
 
   // Do not send primary to a host that'll be overloaded by it
-  const low_load_nodes = non_conflicts.filter(s => (primary_map.hosts[s.host] + 1) < primary_map.total * threshold);
+  const low_load_nodes = non_conflicts.filter(s => (primary_map.hosts[s.host] + 1) <= primary_map.total * threshold);
 
   return low_load_nodes;
 }
