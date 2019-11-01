@@ -40,7 +40,7 @@ class Play_ES {
         const dtype = (m.dest.primary ? "PRIMARY" : "REPLICA");
         const est = (conf ? ` with ${conf}% confidence` : '');
 
-        return `${colors.fg.cyan}SWAPPING${colors.reset} ${colors.bright}[${stype}]${colors.reset} ${colors.fg.green}${m.source.host}/${colors.dim}${m.source.shard}${colors.reset} ${colors.bright}[${dtype}]${colors.reset} ${colors.fg.red}${m.dest.host}/${colors.dim}${m.dest.shard}${colors.reset} ${est}`
+        return `${colors.fg.cyan}SWAPPING${colors.reset} ${colors.bright}[${stype}]${colors.reset} ${colors.fg.green}${m.source.host}/${colors.dim}${m.source.shard}${colors.reset} ${colors.bright}[${dtype}]${colors.reset} ${colors.fg.blue}${m.dest.host}/${colors.dim}${m.dest.shard}${colors.reset} ${est}`
       }).join('\n');
     } else {
       return this.moves.map((m) => {

@@ -20,7 +20,8 @@ class Game_ES {
     const rows = initial_state.split('\n').map(l => {
       const split = l.split(/\s+/);
 
-      if (split.length !== 6) {
+      // Filter invalid rows
+      if (split.length < 6) {
         return null;
       }
 
@@ -45,13 +46,14 @@ class Game_ES {
     // Save target shards, ignore system indeces
     this.initial_state_shards = rows.filter(r => !!r && !r.index.startsWith('.') && (!this.target_index || this.target_index.indexOf(r.index) > -1));
 
+    // Save the number of primaries
+    const hosts = getHosts(this.initial_state_shards);
+    this.num_primaries = hosts.total;
+
     // Determine threshold for perfect balance automatically if not specified
     if (!this.threshold) {
-      const hosts = getHosts(this.initial_state_shards);
-      const num_primaries = hosts.total;
       const num_hosts = Object.keys(hosts.hosts).length;
-
-      this.threshold = Math.ceil(num_primaries / num_hosts) / num_primaries;
+      this.threshold = Math.ceil(this.num_primaries / num_hosts) / this.num_primaries;
     }
   }
 
@@ -82,7 +84,6 @@ class Game_ES {
 
       // No more moves if previous player did nothing
       if (last_play.player === -1) {
-        console.log("no more moves");
         return [];
       }
 
@@ -140,7 +141,9 @@ class Game_ES {
       });
     });
 
-    if ((state.player === -1 && newShards.filter(s => s.primary).length === 39) || (state.player === 1 &&  newShards.filter(s => s.primary).length === 38)) {
+    // There were some issues where primaries would disappear during the simulation (forgot to prevent primaries being swapped with other primaries).
+    // This was added to figure out what happened, and I'm leaving it here as a precaution. At least until there are some unit tests covering this.
+    if ((state.player === -1 && newShards.filter(s => s.primary).length === (this.num_primaries - 1)) || (state.player === 1 &&  newShards.filter(s => s.primary).length === (this.num_primaries - 2))) {
       console.log("---")
       console.log(play.moves.length);
       console.log(logger.map(l => `[${l.osrc.shard}:${l.osrc.primary}-${l.odst.shard}:${l.odst.primary}}](${l.osrc.host}-${l.odst.host})`))
@@ -178,7 +181,22 @@ class Game_ES {
       return -1;
     }
 
-    return null
+    return null;
+  }
+
+  printCurrentClusterState(shards) {
+    const primary_hosts = getHosts(shards);
+
+    Object.keys(primary_hosts.hosts).sort().forEach((p) => {
+      const current_threshold = (primary_hosts.hosts[p] / primary_hosts.total);
+      let color = "\x1b[2m";
+
+      if (current_threshold > this.threshold) {
+        color = "\x1b[31m";
+      }
+
+      console.log(` ${color}${p}:\t${primary_hosts.hosts[p]}\t(${current_threshold.toFixed(3)})\x1b[0m`);
+    });
   }
 }
 

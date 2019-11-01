@@ -8,6 +8,7 @@ const MonteCarlo = require('./src/monte-carlo.js')
 // Setup
 let args;
 let ellipse = 0;
+let didprintvars = false;
 
 try {
   args = new parseArgs(process.argv);
@@ -47,14 +48,20 @@ function run(initial_state) {
   let root_hash = state.hash();
   let stats, conf, moves = 0;
 
-  if (!args.threshold) {
-    console.log("[-] No threshold specified, will try to achieve perfect balance.");
-  }
+  if (!didprintvars) {
+    didprintvars = true;
 
-  console.log();
-  console.log(`[+] Using threshold: ${game.threshold.toFixed(3)}`);
-  console.log(`[+] Simulation time: ${args.simtime} seconds.`);
-  console.log();
+    if (!args.threshold) {
+      console.log("[-] No threshold specified, will try to achieve perfect balance.");
+    }
+
+    console.log();
+    console.log(`[+] Using threshold: ${game.threshold.toFixed(3)}`);
+    console.log(`[+] Simulation time: ${args.simtime} seconds.`);
+    console.log();
+    console.log("[+] Current cluster state:");
+    game.printCurrentClusterState(state.shards);
+  }
 
   // Run command
   switch (args.action) {
@@ -83,6 +90,11 @@ function run(initial_state) {
 
   // Output result
   console.log("\n" + decideResult(args.action, winner, moves, conf, state) + "\n");
+
+  if (args.action !== 'suggest') {
+    console.log("Achieved cluster state:");
+    game.printCurrentClusterState(state.shards);
+  }
 }
 
 
@@ -101,7 +113,7 @@ function suggest(mcts, game, state, log) {
 
   // Print stats for move if log is true
   if (log) {
-    console.log((state.player === 1 ? "\n" : ""), play.pretty((stats.n_wins / stats.n_plays * 100).toFixed(2)));
+    console.log((state.player === 1 ? "\n" : ""), play.pretty());
   }
 
   return game.nextState(state, play);
@@ -150,7 +162,7 @@ function decideResult(action, winner, moves, conf, state) {
   // Generate output
 
   if (action === 'dry-run') {
-    return decideDryRunResult(winner, moves, conf);
+    return decideDryRunResult(state, winner, moves, conf);
   }
 
   if (action === 'suggest') {
@@ -163,27 +175,27 @@ function decideResult(action, winner, moves, conf, state) {
 }
 
 
-function decideDryRunResult(winner, moves, conf) {
+function decideDryRunResult(state, winner, moves, conf) {
   // Fail
   if (winner === -1) {
     return "[!] Impossible to achieve desired balance, try a higher threshold.";
   }
   // Success
   else {
-    return `[+] Simulation succeeded in ${moves} moves, with an estimated ${conf}% probability of success.`;
+    return `[+] Simulation succeeded in ${moves} moves, with an estimated ${conf}% chance of success.`;
   }
 }
 
 
 function decideSuggestResult(state, conf) {
   let play = state.playHistory[0];
-  return `Play:\n${play.pretty(conf)}\n\ncurl '${args.host}/_cluster/reroute' -X POST -H 'Content-Type: application/json' -d '${play.commands()}'\n`;
+  return `Play:\n ${play.pretty()}\n\ncurl '${args.host}/_cluster/reroute' -X POST -H 'Content-Type: application/json' -d '${play.commands()}'\n`;
 }
 
 
 function decideBalanceResult(state, conf) {
   let play = state.playHistory[0];
-  return `Play:\n${play.pretty(conf)}\n`;
+  return ` ${play.pretty()}`;
 }
 
 
