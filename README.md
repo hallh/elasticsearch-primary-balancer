@@ -156,7 +156,7 @@ Say you have `40` primaries spread across `9` instances. This would put the perf
 1. Might dockerise this so people don't need to install `node` to use it.
 2. Might add support to balance based on shard sizes.
 3. Should probably add unit tests.
-4. Could add some logic to the move selector so that it chose the play with the fastest path to completion, instead of the highest probability of success. Reason being that if you're not greedy with the threshold, you'll likely have ~100% chance of success in achieving imperfect balance. However, the fastest path vs. the highest confidence path might be have a significant difference in the amount of moves needed to complete.
+4. Could add some logic to the move selector so that it chose the play with the fastest path to completion, instead of the highest probability of success. Reason being that if you're not greedy with the threshold, you'll likely have ~100% chance of success in achieving imperfect balance. However, the fastest path vs. the highest confidence path might have a significant difference in the amount of moves needed to complete.
 5. Issues and pull requests are welcome.
 
 ### Credits
