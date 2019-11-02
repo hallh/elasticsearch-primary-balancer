@@ -92,10 +92,10 @@ $ node balance.js dry-run --simulation-time 3 --map es-data-0#1a,es-data-1#1b,es
  es-data-8:	8	(0.064)
 
  SWAPPING [PRIMARY] es-data-4/rollup_2019.10:6 [REPLICA] es-data-8/appv4:20
- SWAPPING [PRIMARY] es-data-7/staging_achoo_appv3:21 [REPLICA] es-data-3/rollup_2019.12:4
+ SWAPPING [PRIMARY] es-data-7/staging_appv3:21 [REPLICA] es-data-3/rollup_2019.12:4
  SWAPPING [PRIMARY] es-data-4/rollup_2019.11:5 [REPLICA] es-data-8/rollup_2019.10:2
  SWAPPING [PRIMARY] es-data-7/appv4:4 [REPLICA] es-data-8/appv4:25
- SWAPPING [PRIMARY] es-data-6/staging_achoo_appv3:28 [REPLICA] es-data-3/appv4:23
+ SWAPPING [PRIMARY] es-data-6/staging_appv3:28 [REPLICA] es-data-3/appv4:23
  SWAPPING [PRIMARY] es-data-4/rollup_2019.11:6 [REPLICA] es-data-8/rollup_2019.12:1
  SWAPPING [PRIMARY] es-data-7/rollup_2019.07:7 [REPLICA] es-data-8/rollup_2019.09:0
  SWAPPING [PRIMARY] es-data-6/rollup_2019.11:1 [REPLICA] es-data-2/appv4:16
@@ -123,7 +123,7 @@ In this case we couldn't get a perfectly balanced cluster, but close to it. If w
 **Doing a real run**
 
 ```sh
-$ node balance.js balance --index appv4,rollup_2019.10 --simulation-time 2 localhost:9200
+$ node balance.js balance --index appv4,rollup_2019.11 --simulation-time 2 localhost:9200
 
 [-] No threshold specified, will try to achieve perfect balance.
 
@@ -141,9 +141,9 @@ $ node balance.js balance --index appv4,rollup_2019.10 --simulation-time 2 local
  es-data-7:	6	(0.150)
  es-data-8:	4	(0.100)
 
- SWAPPING [PRIMARY] es-data-0/rollup_2019.10:9 [REPLICA] es-data-2/appv4:8
+ SWAPPING [PRIMARY] es-data-0/rollup_2019.11:9 [REPLICA] es-data-2/appv4:8
  SWAPPING [PRIMARY] es-data-7/appv4:5 [REPLICA] es-data-2/appv4:26
- SWAPPING [PRIMARY] es-data-7/appv4:3 [REPLICA] es-data-2/rollup_2019.10:6
+ SWAPPING [PRIMARY] es-data-7/appv4:3 [REPLICA] es-data-2/rollup_2019.11:6
 [-] Waiting for relocation to complete...
 ```
 
