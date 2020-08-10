@@ -198,7 +198,7 @@ function decideDryRunResult(state, winner, moves, conf, game) {
 
 function decideSuggestResult(state, conf) {
   let play = state.playHistory[0];
-  return `[+] Suggested move:\n${play.pretty()}\n\ncurl '${args.host}/_cluster/reroute' -X POST -H 'Content-Type: application/json' -d '${play.commands()}'\n`;
+  return `[+] Suggested move:\n${play.pretty()}\n\ncurl '${args.host}/_cluster/reroute' -X POST -H 'Content-Type: application/json' -H 'Authorization: Basic ${args.auth}' -d '${play.commands()}'\n`;
 }
 
 
