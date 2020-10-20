@@ -176,7 +176,7 @@ function decideResult(action, winner, moves, conf, state, game) {
   }
 
   if (action === 'balance') {
-    return decideBalanceResult(state, conf, game, winner);
+    return decideBalanceResult(state, winner, moves, conf, game);
   }
 }
 
