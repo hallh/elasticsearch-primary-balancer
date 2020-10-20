@@ -12,14 +12,8 @@ const AUTH      = 'auth';
 
 class parseArgs {
   constructor(args) {
-    const wargs = args.slice(2);
-
     if (!Array.isArray(args)) {
       throw new Error('Unexpected input, expecting an array.');
-    }
-
-    if (args.length === 0) {
-      throw new Error('Missing required option: HOST[:PORT].');
     }
 
     // Define actions
@@ -41,8 +35,13 @@ class parseArgs {
     // Set defaults
     this[SIMTIME] = "10";
 
-    // Get ES host and create options object
-    this.host = wargs.splice(-1).pop();
+    // Remove default process args
+    const wargs = args.slice(2);
+
+    // Check whether to show help page
+    if (wargs.length === 0 || args.some(a => a === '-h' || a === '--help')) {
+      return this.showHelp();
+    }
 
     // Parse opts
     for (let i = 0; i < wargs.length; i++) {
@@ -57,6 +56,10 @@ class parseArgs {
 
       else if (this.isAction(wargs[i])) {
         this[this.actions[wargs[i]]] = wargs[i];
+      }
+
+      else if (!this.host) {
+        this.host = wargs[i];
       }
 
       else {
@@ -123,6 +126,10 @@ class parseArgs {
 
     // Split index list into array
     if (this.hasOwnProperty(INDEX)) {
+      if (this[INDEX].match(/\*/) !== null) {
+        throw new Error('Wildcards are not supported in the index filter, please state each index explicitly in a comma-separated list.');
+      }
+
       this[INDEX] = this[INDEX].split(',');
     }
 
@@ -135,12 +142,41 @@ class parseArgs {
       this[THRESHOLD] = parseFloat(this[THRESHOLD]);
     }
 
-    // Don't validate auth
+    // Validate auth is in user:password format
+    if (this.hasOwnProperty(AUTH)) {
+      if (this[AUTH].match(/^.+:.+$/) === null) {
+        throw new Error('Auth must be passed as "user:password"');
+      }
+
+      this[AUTH] = Buffer.from(this[AUTH]).toString('base64');
+    }
 
 
     // Delete unneeded objects
     delete this.actions;
     delete this.options;
+  }
+
+  showHelp() {
+    const usage = "\nUsage: node balance.js [dry-run|suggest|balance] [options] host[:port]\n" +
+                "\nActions:\n" +
+                "  dry-run                Simulate all the steps necessary to achieve balance. No changes will be made to the cluster in this mode.\n" +
+                "  suggest                Suggest the best move and print corresponding cURL command. No changes will be made to the cluster in this mode.\n" +
+                "  balance                Perform the balancing automatically. Will wait between each relocation before performing the next.\n" +
+                "                         - It's strongly suggested to disable cluster allocation in this mode. See README for details.\n" +
+                "\nOptions:\n" +
+                "  --map H1#A1,H2#A2      A comma-separated list of HOSTNAME#ZONE pairs. Setting this will only allow shard relocations within the same\n" +
+                "                         zone to prevent regional data transfer costs.\n" +
+                "  --simulation-time N    Override the default 10s simulation time. Setting a higher simulation time is sometimes necessary on very large\n" +
+                "                         clusters.\n" +
+                "  --index a,b,c          A comma-separated list of indexes to include for balancing. Index names must be typed explicitly. Wildcards are\n" +
+                "                         not supported.\n" +
+                "  --threshold N          This will set a custom allocation threshold. Use this option if your cluster cannot achieve a perfect balance.\n" +
+                "  --auth user:pwd        Necessary if you have security enabled on your cluster.\n" +
+                "  -h, --help             Show help message and exit.\n";
+
+    console.log(usage);
+    process.exit(1);
   }
 }
 
