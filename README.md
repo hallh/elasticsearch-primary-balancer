@@ -24,12 +24,13 @@ The tool can be run as follows:
 
 ```sh
 $ node balance.js \
+    [-h, --help] \
     [dry-run|suggest|balance] \
     [--map H0#AZ1,HN#AZN] \
     [--simulation-time N] \
     [--index index1,...,indexN] \
     [--threshold N] \
-    [--auth AUTH] \
+    [--auth user:password] \
     HOST[:PORT]
 ```
 
@@ -49,18 +50,19 @@ All of the options below are optional except for the `HOST[:PORT]` URI of your E
 
 | Option | Required? | Description |
 | --- | --- | --- |
+| -h,&nbsp;--help | No |Will print help message and exit. |
 | --map&nbsp;H0#AZ1,HN#AZN | No |Will use this mapping to only swap shards with nodes in the same AZ. |
 | --simulation-time&nbsp;N | No |Before each move, the MCTS algorithm will spend `N` seconds to run simulations of random moves and choose the move with the best chance of success. **Default: 10**. |
 | --index&nbsp;INDECES | No |Comma-separated list of indexes to consider. Not all indexes on a cluster are necessarily upserted, so this will limit the balancing to only consider the primaries of the desired indexes. |
 | --threshold&nbsp;N | No |This will set a custom allocation threshold. Use this option if your cluster cannot achieve a perfect balance. If that is the case, the `dry-run` mode will state so and suggest a possible value for you. **Default**: Perfect balance. |
-| --auth&nbsp;AUTH | No |Base64 encoded HTTP Basic Auth string to use. Necessary if you have basic auth set up. |
+| --auth&nbsp;user:password | No |Necessary if you have security plugins set up. |
 | HOST[:PORT] | **Yes** |Where to connect to Elasticsearch. |
 
 ### How to run it?
 
-It's recommended that you disable all shard balancing before running the tool. Moving shards around will likely trigger ES' built-in balancer. After the tool has run to completion you can re-enable the setting to its previous value. If your shards are similarly sized, the cluster likeely won't need to do any additional balancing after the tool has run.
+It's recommended that you disable all shard balancing before running the tool in `balance` mode. Moving shards around will likely trigger ES' built-in balancer. After the tool has run to completion you can re-enable the setting to its previous value. If your shards are similarly sized, the cluster won't need to do any additional balancing after the tool has run.
 
-**`NOTE`**: You should always do the `dry-run` first. It'll output the current distribution of primaries as well as the percentage of shards each node should hold to be perfectly balanced. Some clusters may be impossible to balance depending on the number of shards, where they are located, and other factors I may not be considering right now. You will either get a message saying the dry-run was successful, or an error message if it's deemed impossible to perfectly balance the primaries. If it does turn out to be impossible to get a perfect balance, you can use the `--threshold` flag to adjust the max percentage of primaries each node is allowed to host. See more about this under the **Imperfect balance** section.
+**`NOTE`**: You should always run the `dry-run` first. It'll output the current distribution of primaries as well as the percentage of shards each node should hold to be perfectly balanced. Some clusters may be impossible to balance depending on the number of shards, where they are located, and other factors that the tool may not be considering right now. You will either get a message saying the dry-run was successful, or an error message if it's deemed impossible to perfectly balance the primaries. If it does turn out to be impossible to get a perfect balance, you can use the `--threshold` option to adjust the max percentage of primaries each node is allowed to host. See more about this under the **Imperfect balance** section.
 
 **Disabling Shard Balancing**
 
