@@ -146,9 +146,7 @@ function balance(mcts, game, state) {
   }
 
   // Submit move async
-  submitMove(play.commands(), (error, body) => {
-    let res = JSON.parse(body);
-
+  submitMove(play.commands(), (error, res) => {
     if (error || res.acknowledged !== true) {
       console.log(error, res);
       throw new Error('RELOCATION REQUEST FAILED');

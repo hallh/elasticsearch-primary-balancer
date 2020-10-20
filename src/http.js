@@ -70,7 +70,7 @@ class request {
 
     // Set body headers if necessary
     if (this.encoded) {
-      this.headers = {
+      options.headers = {
         'Content-Type': 'application/json',
         'Content-Length': this.encoded.length
       };
@@ -83,17 +83,24 @@ class request {
 
     // Make request
     const req = client.request(options, res => {
-      let chunks = [];
+      const chunks = [];
 
       res.on('data', d => chunks.push(d));
       res.on('end', () => {
-        let response = Buffer.concat(chunks).toString();
+        const response = Buffer.concat(chunks).toString();
+        let body;
 
-        if (res.statusCode !== 200) {
-          return callback(new Error('Non-200 Code'), response);
+        try {
+          body = JSON.parse(response);
+        } catch (e) {
+          body = response;
         }
 
-        callback(null, response);
+        if (res.statusCode !== 200) {
+          return callback(new Error('Non-200 Code'), body);
+        }
+
+        callback(null, body);
       });
 
     });
