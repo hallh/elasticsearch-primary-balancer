@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 'use strict'
 
 const request = require('./src/http');
@@ -21,8 +22,10 @@ try {
 // Funcs
 
 function startRun() {
+  const path = (args.index ? `/${args.index.join(',')}` : '');
+
   const opts = {
-    url: `${args.host}/_cat/shards?h=index,shard,prirep,state,store,node`
+    url: `${args.host}/_cat/shards${path}?h=index,shard,prirep,state,store,node`
   };
 
   if (args.auth) {
@@ -33,7 +36,7 @@ function startRun() {
 
   const req = new request(opts, (error, body) => {
     if (error) {
-      throw error;
+      return handleRequestErrors(error, body, "CAT SHARDS")
     }
 
     run(body);
@@ -231,7 +234,7 @@ function submitMove(cmds, cb) {
 
 
 function checkIfReady() {
-  // Only wait if we're actively balancing. No need to wait when simulating.
+  // No need check for relocations when simulating.
   if (args.action !== 'balance') {
     return startRun();
   }
@@ -269,4 +272,65 @@ function checkIfReady() {
 }
 
 
-checkIfReady();
+function checkPrivileges() {
+  if (!args.auth) {
+    return startRun();
+  }
+
+  // Check privileges on the target index, or on all indexes if none
+  // is specified
+  const target_index = (!!args.index ? args.index : ["*"]);
+
+  // List of privileges required to do RO operations
+  const required_privs = {
+    "cluster": ["monitor"],
+    "index": [{
+     "names": target_index,
+      "privileges": [ "monitor" ]
+    }]
+  };
+
+  // If we're making moves we need the manage privilege too
+  if (args.action === 'balance') {
+    required_privs.cluster.push('manage');
+  }
+
+  // HTTP request
+  const opts = {
+    url: `${args.host}/_security/user/_has_privileges`,
+    method: 'POST',
+    body: required_privs,
+    headers: {
+      'Authorization': `Basic ${args.auth}`
+    }
+  };
+
+  const req = new request(opts, (error, body) => {
+    if (error) {
+      return handleRequestErrors(error, body, 'CHECK PRIVILEGES');
+    }
+
+    if (!body.has_all_requested) {
+      return console.log(`\n[!] Your user doesn't have all the necessary permissions. Required permissions are:\n${JSON.stringify(required_privs, null, 2)}\n`);
+    }
+
+    // We have the necessary permissions, proceed
+    checkIfReady();
+  });
+}
+
+
+function handleRequestErrors(error, body, action) {
+  if (body && body.status === 401 && !!args.auth) {
+    console.log(`\n[!] Your user doesn't have the necessary permissions to perfom this action: ${action}\nES error message: "${body.error.reason}"\n`);
+  } else if (body && body.status === 401 && !args.auth) {
+    console.log(`\n[!] This cluster has security enabled, you must use the --auth option to specify a user:password combination.\n`);
+  } else if (body && body.error && body.error.reason) {
+    console.log(`\n[!] ElasticSearch returned the following error when attempting to perform this action: ${action}\nES error message: "${body.error.reason}"\n`);
+  } else {
+    console.log(`\n[!] An unknown error occurred while performing this action: ${action}\n${JSON.stringify(body, null, 2)}\n`);
+  }
+}
+
+
+checkPrivileges();
