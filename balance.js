@@ -161,7 +161,7 @@ function balance(mcts, game, state) {
 
 function decideResult(action, winner, moves, conf, state, game) {
   // No need for custom output if nothing was done
-  if (winner === 1 && moves === 0) {
+  if (winner === 1 && moves === 0 && action !== 'balance') {
     return "\n\n[+] No moves needed, cluster already balanced.\n";
   }
 
@@ -200,11 +200,11 @@ function decideSuggestResult(state, conf) {
 }
 
 
-function decideBalanceResult(state, conf, game, winner) {
+function decideBalanceResult(state, winner, moves, conf, game) {
   if (winner === -1) {
-    return `\n[!] Impossible to achieve desired balance, try a higher threshold.\n\nAchieved state:\n${game.printCurrentClusterState(state.shards)}\n`;
-  } else if (winner === 0) {
-    return `\n[+] Balance succeeded in ${moves} moves.\n\nFinal state:\n${game.printCurrentClusterState(state.shards)}\n`;
+    return `\n\n[!] Impossible to achieve desired balance, try a higher threshold.\n\nAchieved state:\n${game.printCurrentClusterState(state.shards)}\n`;
+  } else if (winner === 1 && moves === 0) {
+    return `\n\n[+] Balance succeeded!\n\nFinal state:\n${game.printCurrentClusterState(state.shards)}\n`;
   } else {
     let play = state.playHistory[0];
     return `\r${play.pretty()}`;
