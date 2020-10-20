@@ -63,3 +63,5 @@ typings/
 # custom
 *.sublime-workspace
 images
+dockers
+
