@@ -273,7 +273,9 @@ function checkIfReady() {
 
 
 function checkPrivileges() {
-  if (!args.auth) {
+  const ENABLED = false;
+
+  if (!args.auth || !ENABLED) {
     return startRun();
   }
 
