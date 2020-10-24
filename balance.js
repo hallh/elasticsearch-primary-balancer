@@ -272,56 +272,6 @@ function checkIfReady() {
 }
 
 
-function checkPrivileges() {
-  const ENABLED = false;
-
-  if (!args.auth || !ENABLED) {
-    return startRun();
-  }
-
-  // Check privileges on the target index, or on all indexes if none
-  // is specified
-  const target_index = (!!args.index ? args.index : ["*"]);
-
-  // List of privileges required to do RO operations
-  const required_privs = {
-    "cluster": ["monitor"],
-    "index": [{
-     "names": target_index,
-      "privileges": [ "monitor" ]
-    }]
-  };
-
-  // If we're making moves we need the manage privilege too
-  if (args.action === 'balance') {
-    required_privs.cluster.push('manage');
-  }
-
-  // HTTP request
-  const opts = {
-    url: `${args.host}/_security/user/_has_privileges`,
-    method: 'POST',
-    body: required_privs,
-    headers: {
-      'Authorization': `Basic ${args.auth}`
-    }
-  };
-
-  const req = new request(opts, (error, body) => {
-    if (error) {
-      return handleRequestErrors(error, body, 'CHECK PRIVILEGES');
-    }
-
-    if (!body.has_all_requested) {
-      return console.log(`\n[!] Your user doesn't have all the necessary permissions. Required permissions are:\n${JSON.stringify(required_privs, null, 2)}\n`);
-    }
-
-    // We have the necessary permissions, proceed
-    checkIfReady();
-  });
-}
-
-
 function handleRequestErrors(error, body, action) {
   if (error && error.errno && error.code) {
     console.log(`\n[!] Failed to connect to cluster with error: ${error.code}, using host: ${args.host}.\n`);
@@ -337,4 +287,4 @@ function handleRequestErrors(error, body, action) {
 }
 
 
-checkPrivileges();
+startRun();
