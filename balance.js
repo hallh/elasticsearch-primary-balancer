@@ -15,7 +15,7 @@ let didprintvars = false;
 try {
   args = new parseArgs(process.argv);
 } catch (e) {
-  console.log(`[!] ${e.message}\n`);
+  console.log(`\n[!] ${e.message}\n`);
   return process.exit(-1);
 }
 
@@ -28,7 +28,7 @@ function startRun() {
     url: `${args.host}/_cat/shards${path}?h=index,shard,prirep,state,store,node`
   };
 
-  if (args.auth) {
+  if (args.auth) {
     opts.headers = {
       'Authorization': `Basic ${args.auth}`
     };
@@ -323,7 +323,9 @@ function checkPrivileges() {
 
 
 function handleRequestErrors(error, body, action) {
-  if (body && body.status === 401 && !!args.auth) {
+  if (error && error.errno && error.code) {
+    console.log(`\n[!] Failed to connect to cluster with error: ${error.code}, using host: ${args.host}.\n`);
+  } else if (body && body.status === 401 && !!args.auth) {
     console.log(`\n[!] Your user doesn't have the necessary permissions to perfom this action: ${action}\nES error message: "${body.error.reason}"\n`);
   } else if (body && body.status === 401 && !args.auth) {
     console.log(`\n[!] This cluster has security enabled, you must use the --auth option to specify a user:password combination.\n`);

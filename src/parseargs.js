@@ -1,4 +1,6 @@
-'use strict'
+'use strict';
+
+const URL = require('url');
 
 const DRYRUN    = 'dryrun';
 const SUGGEST   = 'suggest';
@@ -82,7 +84,23 @@ class parseArgs {
   validate() {
     // Make sure we have an endpoint for ES
     if (!this.host) {
-      throw new Error(`Invalid ES host option: ${this.host}`);
+      throw new Error(`You must specify the URL for the cluster!`);
+    }
+
+    try {
+      const parsed_host = URL.parse(this.host.match(/^https?:\/\//i) === null ? `http://${this.host}` : this.host);
+
+      if (!parsed_host.host) {
+        throw new Error('Invalid URL');
+      }
+
+      this.host = `${parsed_host.protocol}//${parsed_host.host}`;
+
+      if (parsed_host.auth) {
+        this[AUTH] = parsed_host.auth;
+      }
+    } catch (e) {
+      throw new Error('Cluster URL is invalid!');
     }
 
     // Can only perform one action
