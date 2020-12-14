@@ -18,7 +18,7 @@ This tool will only address the issue with primary shards being bunched up on a 
 4. No NPM dependencies.
 5. Pretty output :)
 
-### Running
+### Running (standalone)
 
 The tool can be run as follows:
 
@@ -57,6 +57,22 @@ All of the options below are optional except for the `HOST[:PORT]` URI of your E
 | --threshold&nbsp;N | No |This will set a custom allocation threshold. Use this option if your cluster cannot achieve a perfect balance. If that is the case, the `dry-run` mode will state so and suggest a possible value for you. **Default**: Perfect balance. |
 | --auth&nbsp;user:password | No |Necessary if you have security plugins set up. |
 | HOST[:PORT] | **Yes** |Where to connect to Elasticsearch. |
+
+### Running (docker)
+
+A docker image can be build using
+
+```sh
+docker build -t elasticsearch-primary-balancer .
+```
+
+Then the balancer can be run using
+
+```sh
+docker run --rm elasticsearch-primary-balancer:latest <options>
+```
+with `<options>` as for `node balance.js` above.
+
 
 ### How to run it?
 
@@ -155,11 +171,10 @@ Say you have `40` primaries spread across `9` instances. This would put the perf
 
 ### Future work
 
-1. Might dockerise this so people don't need to install `node` to use it.
-2. Might add support to balance based on shard sizes.
-3. Should probably add unit tests.
-4. Could add some logic to the move selector so that it chose the play with the fastest path to completion, instead of the highest probability of success. Reason being that if you're not greedy with the threshold, you'll likely have ~100% chance of success in achieving imperfect balance. However, the fastest path vs. the highest confidence path might have a significant difference in the amount of moves needed to complete.
-5. Issues and pull requests are welcome.
+1. Might add support to balance based on shard sizes.
+2. Should probably add unit tests.
+3. Could add some logic to the move selector so that it chose the play with the fastest path to completion, instead of the highest probability of success. Reason being that if you're not greedy with the threshold, you'll likely have ~100% chance of success in achieving imperfect balance. However, the fastest path vs. the highest confidence path might have a significant difference in the amount of moves needed to complete.
+4. Issues and pull requests are welcome.
 
 ### Credits
 
