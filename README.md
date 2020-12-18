@@ -69,7 +69,7 @@ docker build -t elasticsearch-primary-balancer .
 Then the balancer can be run using
 
 ```sh
-docker run --rm elasticsearch-primary-balancer:latest <options>
+docker run -it --rm elasticsearch-primary-balancer:latest <options>
 ```
 with `<options>` as for `node balance.js` above.
 
