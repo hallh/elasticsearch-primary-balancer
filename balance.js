@@ -6,6 +6,8 @@ const parseArgs = require('./src/parseargs.js')
 const Game_ES = require('./src/game-es.js')
 const MonteCarlo = require('./src/monte-carlo.js')
 
+var readline = require('readline');
+
 // Setup
 let refresh = 1000;
 let args;
@@ -56,7 +58,11 @@ function run(initial_state) {
     didprintvars = true;
 
     if (!args.threshold) {
-      process.stdout.clearLine();
+      if (Boolean(process.stdout.isTTY)) {
+        process.stdout.clearLine();
+      } else {
+        readline.cursorTo(process.stdout, 0);
+      }
       console.log();
       console.log("[-] No threshold specified, will try to achieve a perfect balance.");
     }
@@ -260,7 +266,11 @@ function checkIfReady() {
     if (body.split('\n').find(line => line.match(/RELOCATING/))) {
       ellipse = (ellipse % 3) + 1;
 
-      process.stdout.clearLine();
+      if (Boolean(process.stdout.isTTY)) {
+        process.stdout.clearLine();
+      } else {
+        readline.cursorTo(process.stdout, 0);
+      }
       process.stdout.write(`\r[-] Waiting for relocation to complete${".".repeat(ellipse)}`);
 
       return setTimeout(() => { process.nextTick(checkIfReady); }, refresh);
