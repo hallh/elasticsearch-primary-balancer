@@ -64,7 +64,7 @@ class request {
     // Use HTTPS client if specified
     if (this.parsed.protocol === 'https:') {
       client = https;
-      options.port = '443';
+      options.port = '9200';
       options.minVersion = 'TLSv1'; // Defaults to TLSv1.2 which may not be supported by whichever endpoint
     }
 
